@@ -41,36 +41,12 @@ public class MySmartCardApplet extends Applet {
     
     // Method to write expiry date to card
 
-
-    public boolean checkDate() {
-        currentDate = ;
-        expireDateCard = ;
-
-        // Three if statements in eachother 
-        if(currentDate[year]<=expireDateCard[year]) {
-            if(currentDate[month]<=expireDateCard[month]){
-                if(currentDate[day]<=expireDateCard[day]){
-                    return true;
-                }
-            }
-        } 
-        return false;
-    }
-
     // Selection method
     public boolean select() {
         // Return true to indicate that the applet is selectable
         // maybe POS or Reload selection, this is just a normal function that you can call, use it as you wish, can also be a function to clear everything (The end of transaction)
         // NOT REQUIRED TO USE IT
         // Probably use it for checking if card is expired
-    }
-
-    
-    // Expiration date check function
-    private boolean expireDate() {
-        // Implement your expiration date check logic here
-        // Compare the current date with the expiration date stored on the card
-        // Return true if the card is not expired, false if it is expired
     }
     
     // Processing method
