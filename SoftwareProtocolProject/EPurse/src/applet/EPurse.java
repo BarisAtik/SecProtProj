@@ -14,10 +14,9 @@ public class EPurse extends Applet implements ISO7816 {
         card_id = new byte[4]; 
         // authentication_keys, will be added later if cryptographic keys are needed
         expire_date = new byte[4]; // Unix timestamp
-        card_counter = new byte[4] // 8 million transactions, We must make sure that when counter reaches end, the card dies, otherwise it will be a security risk
+        card_counter = new byte[4]; // 8 million transactions, We must make sure that when counter reaches end, the card dies, otherwise it will be a security risk
         // master_public_key, will be added later if cryptographic keys are needed
-        end_of_life = false; // If true, the cardgit config --global user.name "John Doe"git config --global user.name "John Doe"
-         is dead
+        end_of_life = false; // If true, the cardg is dead
         initized = false; // If true, the card is initialized
         register();
     }
