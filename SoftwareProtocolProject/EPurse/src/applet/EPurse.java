@@ -60,6 +60,9 @@ public class EPurse extends Applet implements ISO7816 {
                 // Set outgoing length to the length of 'Hello World' and send response
                 apdu.setOutgoingAndSend((short) 0, (short) helloWorldBytes.length);
                 break;
+            case 4:
+                System.out.println("I am doing INS 4, e.g. setting UID and Expiraty Date");
+                
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
                 break;
