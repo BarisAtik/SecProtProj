@@ -59,11 +59,26 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
                     // Read the data into the buffer
                     apdu.setIncomingAndReceive();
 
-                    // Convert the data bytes to an int
-                    int terminalId = ByteBuffer.wrap(buffer, OFFSET_CDATA, dataLength).getInt();
+                    // unpack data of 8 bytes to terminalID and cardId, both 4 bytes
+                    byte[] data = new byte[dataLength];
+                    Util.arrayCopy(buffer, OFFSET_CDATA, data, (short) 0, dataLength);
+                    byte[] terminalId = new byte[4];
+                    byte[] cert = new byte[4];
+                    Util.arrayCopy(data, (short) 0, terminalId, (short) 0, (short) 4);
+                    Util.arrayCopy(data, (short) 4, cert, (short) 0, (short) 4);
+
+                    // Convert to ints
+                    int terminalIdInt = ByteBuffer.wrap(terminalId).getInt();
+                    int certInt = ByteBuffer.wrap(cert).getInt();
 
                     // Print the terminal ID
-                    System.out.println("Terminal ID: " + terminalId);
+                    System.out.println("Terminal ID: " + terminalIdInt);
+                    System.out.println("Cert: " + certInt);
+
+                    // int terminalId = ByteBuffer.wrap(buffer, OFFSET_CDATA, dataLength).getInt();
+
+                    // // Print the terminal ID
+                    // System.out.println("Terminal ID: " + terminalId);
                 }
                 break;
             case 2: 

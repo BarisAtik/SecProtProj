@@ -47,7 +47,7 @@ public class POSTerminal{
         selectApplet(simulator);
         
         // Authentication of the EPurse
-        authenticateCard(simulator, 69);
+        authenticateCard(simulator, 69, 3742);
 
         // Get input from commandline and send it to the applet
         Scanner scanner = new Scanner(System.in);
@@ -88,10 +88,16 @@ public class POSTerminal{
         return bb.array();
     }
 
-    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID){
+    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID, int cert){
         // convert int terminalID to byte[]
         byte[] terminalIDBytes = intToBytes(terminalID);
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, terminalIDBytes);
+        byte[] certBytes = intToBytes(cert);
+        // concatenate terminalID and cert
+        byte[] data = new byte[8];
+        System.arraycopy(terminalIDBytes, 0, data, 0, 4);
+        System.arraycopy(certBytes, 0, data, 4, 4);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
+        //CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, terminalIDBytes);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
         //System.out.println("Response: " + toHexString(response.getBytes()));
     }
