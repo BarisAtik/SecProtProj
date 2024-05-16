@@ -1,9 +1,13 @@
 package applet;
 
 import javacard.framework.*;
+import javax.smartcardio.CardChannel;
+import javax.smartcardio.CardException;
+import javax.smartcardio.CommandAPDU;
+import java.applet.Applet;
 import java.nio.ByteBuffer;
 
-public class EPurse extends Applet implements ISO7816 {
+public class EPurse extends javacard.framework.Applet implements ISO7816 {
     // Transient variables
     protected final byte[] state;
 
@@ -47,6 +51,20 @@ public class EPurse extends Applet implements ISO7816 {
         switch (ins) {
             case 1: // Authenticate the card 
                 System.out.println("I am doing INS 1");
+                // Get the length of the incoming data
+                short dataLength = (short) (buffer[OFFSET_LC] & 0x00FF);
+
+                // Check if the APDU has incoming data
+                if (dataLength > 0) {
+                    // Read the data into the buffer
+                    apdu.setIncomingAndReceive();
+
+                    // Convert the data bytes to an int
+                    int terminalId = ByteBuffer.wrap(buffer, OFFSET_CDATA, dataLength).getInt();
+
+                    // Print the terminal ID
+                    System.out.println("Terminal ID: " + terminalId);
+                }
                 break;
             case 2: 
                 System.out.println("I am doing INS 2");

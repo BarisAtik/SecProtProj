@@ -47,7 +47,7 @@ public class POSTerminal{
         selectApplet(simulator);
         
         // Authentication of the EPurse
-        authenticateCard(simulator, 23);
+        authenticateCard(simulator, 69);
 
         // Get input from commandline and send it to the applet
         Scanner scanner = new Scanner(System.in);
