@@ -1,6 +1,7 @@
 package applet;
 
 import javacard.framework.*;
+import java.nio.ByteBuffer;
 
 public class EPurse extends Applet implements ISO7816 {
     // Transient variables
@@ -44,17 +45,16 @@ public class EPurse extends Applet implements ISO7816 {
         }
 
         switch (ins) {
-            case 1:
+            case 1: // Authenticate the card 
                 System.out.println("I am doing INS 1");
-                buffer[0] = (byte) 0x09; // Store the byte '1' in the response buffer
                 break;
-            case 2:
+            case 2: 
                 System.out.println("I am doing INS 2");
                 buffer[0] = (byte) 0x25; // Store the byte '37' in the response buffer
                 break;
             case 3:
                 System.out.println("I am doing INS 3");
-                byte[] helloWorldBytes = "Hello World".getBytes();
+                byte[] helloWorldBytes = "Hello World is the best line".getBytes();
                 System.arraycopy(helloWorldBytes, 0, buffer, 0, helloWorldBytes.length);
                 apdu.setOutgoingAndSend((short) 0, (short) helloWorldBytes.length);
                 break;

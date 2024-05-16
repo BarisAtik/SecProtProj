@@ -3,6 +3,8 @@ package terminal;
 import javacard.framework.AID;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
+
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Scanner;
 
@@ -38,10 +40,15 @@ public class POSTerminal{
     CardChannel applet;
 
     public POSTerminal() {
+
+
         // Create simulator and install applet
         JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
         selectApplet(simulator);
         
+        // Authentication of the EPurse
+        authenticateCard(simulator, 23);
+
         // Get input from commandline and send it to the applet
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter a command: ");
@@ -68,19 +75,24 @@ public class POSTerminal{
         CommandAPDU SELECT_APDU = new CommandAPDU( (byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00,EPURSE_APPLET_AID);
         ResponseAPDU response = simulator.transmitCommand(SELECT_APDU);
     }
-    
-    public static byte[] intToBytes(int value) {
-        byte[] byteValue = new byte[4];
-        byteValue[0] = (byte) (value >> 24);
-        byteValue[1] = (byte) (value >> 16);
-        byteValue[2] = (byte) (value >> 8);
-        byteValue[3] = (byte) value;
-        return byteValue;
-    }
 
     private void sendCommandToApplet(JavaxSmartCardInterface simulator, int command){
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) command, (byte) 0x00, (byte) 0x00);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
         System.out.println("Response: " + toHexString(response.getBytes()));
+    }
+
+    public static byte[] intToBytes(int i) {
+        ByteBuffer bb = ByteBuffer.allocate(4);
+        bb.putInt(i);
+        return bb.array();
+    }
+
+    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID){
+        // convert int terminalID to byte[]
+        byte[] terminalIDBytes = intToBytes(terminalID);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, terminalIDBytes);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+        //System.out.println("Response: " + toHexString(response.getBytes()));
     }
 }
