@@ -105,6 +105,8 @@ public class POSTerminal{
         
         //######## END ARROW ONE ########
         
+
+
         //######## START ARROW TWO ########
 
         // Get the challenge from the response
@@ -115,18 +117,43 @@ public class POSTerminal{
 
         //######## END ARROW TWO ########
 
-        // Send the challenge back to the applet incremented by 1
+
+
+        // Check the challenge (for now just increment and send back)
         challengeInt++;
         challenge = intToBytes(challengeInt);
         
-        // Send instruction 2 to the applet with incremented challenge
+        
+        //######## START ARROW THREE ########
+
+        // Send instruction 2 to the applet with counter (IT IS NOW CHALLENGE INCREMENTED, MUST BE CHANGED)
         CommandAPDU commandAPDU2 = new CommandAPDU((byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0x00, challenge);
         ResponseAPDU response2 = simulator.transmitCommand(commandAPDU2);
+
+        //######## END ARROW THREE ########
+
+
+        //######## START ARROW FOUR ########
 
         // Get the response from the applet
         byte[] response2Data = response2.getData();
         int response2Int = ByteBuffer.wrap(response2Data).getInt();
-        System.out.println("CardID: " + response2Int);
+        System.out.println("CardIDx x: " + response2Int);
+
+        //######## END ARROW FOUR ########
+
+
+
+        //######## START ARROW FIVE ########
+        CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, challenge);
+        ResponseAPDU response3 = simulator.transmitCommand(commandAPDU2);
+        //######## END ARROW FIVE ########
+
+
+
+        //######## START ARROW SIX ########
+
+        //######## END ARROW SIX ########
 
     }
 }
