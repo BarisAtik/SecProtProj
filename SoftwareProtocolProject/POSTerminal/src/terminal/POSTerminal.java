@@ -27,6 +27,7 @@ import com.licel.jcardsim.smartcardio.CardSimulator;
 import applet.EPurse;
 
 public class POSTerminal{
+    private byte[] terminalCounter;
 
     //private JavaxSmartCardInterface simulatorInterface; // SIM
 
@@ -40,15 +41,14 @@ public class POSTerminal{
     CardChannel applet;
 
     public POSTerminal() {
-
-
+        terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x25}; 
         // Create simulator and install applet
         JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
         selectApplet(simulator);
         
         // Authentication of the EPurse
-        authenticateCard(simulator, 69, 3742);
-
+        authenticateCard(simulator, 69, 3742, terminalCounter);
+        
         // Get input from commandline and send it to the applet
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter a command: ");
@@ -88,7 +88,7 @@ public class POSTerminal{
         return bb.array();
     }
 
-    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID, int cert){
+    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID, int cert, byte[] terminalCounter){
         // convert int terminalID to byte[]
         byte[] terminalIDBytes = intToBytes(terminalID);
         byte[] certBytes = intToBytes(cert);
@@ -96,9 +96,37 @@ public class POSTerminal{
         byte[] data = new byte[8];
         System.arraycopy(terminalIDBytes, 0, data, 0, 4);
         System.arraycopy(certBytes, 0, data, 4, 4);
+
+        //######## START ARROW ONE ########
+
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
         //CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, terminalIDBytes);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
-        //System.out.println("Response: " + toHexString(response.getBytes()));
+        
+        //######## END ARROW ONE ########
+        
+        //######## START ARROW TWO ########
+
+        // Get the challenge from the response
+        byte[] challenge = response.getData();
+        // Cast back to int
+        int challengeInt = ByteBuffer.wrap(challenge).getInt();
+        System.out.println("Challenge: " + challengeInt);
+
+        //######## END ARROW TWO ########
+
+        // Send the challenge back to the applet incremented by 1
+        challengeInt++;
+        challenge = intToBytes(challengeInt);
+        
+        // Send instruction 2 to the applet with incremented challenge
+        CommandAPDU commandAPDU2 = new CommandAPDU((byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0x00, challenge);
+        ResponseAPDU response2 = simulator.transmitCommand(commandAPDU2);
+
+        // Get the response from the applet
+        byte[] response2Data = response2.getData();
+        int response2Int = ByteBuffer.wrap(response2Data).getInt();
+        System.out.println("CardID: " + response2Int);
+
     }
 }
