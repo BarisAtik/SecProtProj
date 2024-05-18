@@ -6,10 +6,19 @@ import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import java.applet.Applet;
 import java.nio.ByteBuffer;
+import javacard.security.Signature;
 
 public class EPurse extends javacard.framework.Applet implements ISO7816 {
+    // Constants (TO DO: Move to Constants.java)
+    final static short ID_SIZE = 4;
+    final static short COUNTER_SIZE = 4;
+    final static short SIGNATURE_SIZE = 256;
+
     // Transient variables
     protected final byte[] state;
+    protected final byte[] terminalId;
+    protected final byte[] terminalSignature;
+    protected final Object[] terminalPubKey;
 
     // Persistent variables
     protected byte[] balance; 
@@ -20,6 +29,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected boolean initialized;
 
     // Helper objects
+    private final CardAuth cardAuth;
+    final Signature signatureInstance;
 
     EPurse() {
         cardId = new byte[4];
@@ -30,7 +41,14 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         initialized = false;
 
         state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
+        terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalPubKey = JCSystem.makeTransientObjectArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
         
+        cardAuth = new CardAuth(this);
+
+        signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+
         register();
     }
     
