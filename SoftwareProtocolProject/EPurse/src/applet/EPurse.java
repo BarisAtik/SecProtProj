@@ -1,31 +1,58 @@
 package applet;
 
 import javacard.framework.*;
+import javax.smartcardio.CardChannel;
+import javax.smartcardio.CardException;
+import javax.smartcardio.CommandAPDU;
+import java.applet.Applet;
+import java.nio.ByteBuffer;
+import javacard.security.Signature;
 
-public class EPurse extends Applet implements ISO7816 {
-    // Constants and variables for card initialization
-    // Constants and variables for card state (e.g., balance, expiry date)
-    // Constants and variables for cryptographic keys
+public class EPurse extends javacard.framework.Applet implements ISO7816 {
+    // Constants (TO DO: Move to Constants.java)
+    final static short ID_SIZE = 4;
+    final static short COUNTER_SIZE = 4;
+    final static short SIGNATURE_SIZE = 256;
+
+    // Transient variables
+    protected final byte[] state;
+    protected final byte[] terminalId;
+    protected final byte[] terminalSignature;
+    protected final Object[] terminalPubKey;
+
+    // Persistent variables
+    protected byte[] balance; 
+    protected byte[] cardCounter; 
+    protected byte[] cardId;
+    protected final byte[] expireDateUnix;
+    protected boolean blocked;
+    protected boolean initialized;
+
+    // Helper objects
+    private final CardAuth cardAuth;
+    final Signature signatureInstance;
 
     EPurse() {
-        // Initialize card state
-        // Initialize cryptographic keys
-        balance = new byte[4];  
-        card_id = new byte[4]; 
-        // authentication_keys, will be added later if cryptographic keys are needed
-        expire_date = new byte[4]; // Unix timestamp
-        card_counter = new byte[4]; // 8 million transactions, We must make sure that when counter reaches end, the card dies, otherwise it will be a security risk
-        // master_public_key, will be added later if cryptographic keys are needed
-        end_of_life = false; // If true, the cardg is dead
-        initized = false; // If true, the card is initialized
+        cardId = new byte[4];
+        balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
+        cardCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
+        expireDateUnix = new byte[]{0x00, 0x00, 0x00, 0x00};
+        blocked = false;
+        initialized = false;
+
+        state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
+        terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalPubKey = JCSystem.makeTransientObjectArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
+        
+        cardAuth = new CardAuth(this);
+
+        signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
+
         register();
     }
     
     public static void install(byte[] array, short offset, byte length) throws SystemException{
-        // Perform applet installation
-        // Initialize card state
-        // Initialize cryptographic keys
-        // Register applet
         new EPurse();
     }
     
@@ -39,36 +66,27 @@ public class EPurse extends Applet implements ISO7816 {
             return;
         }
 
-        //buffer[0] = (byte) 0x25; // Store the byte '37' in the response buffer
-        //apdu.setOutgoingAndSend((short) 0, (short) 1); // Set outgoing length to 1 and send response
-
         switch (ins) {
-            case 1:
-                System.out.println("I am doing INS 1");
-                buffer[0] = (byte) 0x09; // Store the byte '1' in the response buffer
+            case 1: // Authenticate the card 
+                System.out.println("Authenticating the card...");
+                cardAuth.authenticate1(apdu);
                 break;
-            case 2:
-                System.out.println("I am doing INS 2");
-                buffer[0] = (byte) 0x25; // Store the byte '37' in the response buffer
+            case 2: 
+                System.out.println("Checking the response...");
+                cardAuth.authenticate2(apdu);
                 break;
             case 3:
-                System.out.println("I am doing INS 3");
-                // Convert 'Hello World' to bytes
-                byte[] helloWorldBytes = "Hello World".getBytes();
-                // Copy 'Hello World' bytes to the response buffer
-                System.arraycopy(helloWorldBytes, 0, buffer, 0, helloWorldBytes.length);
-                // Set outgoing length to the length of 'Hello World' and send response
-                apdu.setOutgoingAndSend((short) 0, (short) helloWorldBytes.length);
+                System.out.println("Authenticating the terminal...");
+                cardAuth.authenticate3(apdu);
                 break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
+                // byte[] helloWorldBytes = "Hello World is the best line".getBytes();
+                // System.arraycopy(helloWorldBytes, 0, buffer, 0, helloWorldBytes.length);
+                // apdu.setOutgoingAndSend((short) 0, (short) helloWorldBytes.length);
                 break;
         }
-        //apdu.setOutgoingAndSend((short) 0, (short) 1); // Set outgoing length to 1 and send response
 
     }
-
-
-    // Make the functions (your protocols) here such as: Authenticate, SignForReload, SignForPOS, Reload, POSOnline, POSOffline
 
 }
