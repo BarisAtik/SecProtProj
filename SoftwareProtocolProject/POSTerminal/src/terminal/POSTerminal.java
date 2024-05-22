@@ -146,13 +146,15 @@ public class POSTerminal{
 
         //######## START ARROW FIVE ########
         CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, challenge);
-        ResponseAPDU response3 = simulator.transmitCommand(commandAPDU2);
+        ResponseAPDU response3 = simulator.transmitCommand(commandAPDU3);
         //######## END ARROW FIVE ########
 
 
 
         //######## START ARROW SIX ########
-
+         byte[] response3Data = response2.getData();
+        int response3Int = ByteBuffer.wrap(response3Data).getInt();
+        System.out.println("CardIDx x: " + response3Int);
         //######## END ARROW SIX ########
 
     }

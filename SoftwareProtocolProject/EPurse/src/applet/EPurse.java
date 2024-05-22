@@ -12,13 +12,14 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     // Constants (TO DO: Move to Constants.java)
     final static short ID_SIZE = 4;
     final static short COUNTER_SIZE = 4;
-    final static short SIGNATURE_SIZE = 256;
+    final static short SIGNATURE_SIZE = 4;//256;
 
     // Transient variables
     protected final byte[] state;
     protected final byte[] terminalId;
     protected final byte[] terminalSignature;
     protected final Object[] terminalPubKey;
+    protected final byte[] transientData;
 
     // Persistent variables
     protected byte[] balance; 
@@ -32,6 +33,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     private final CardAuth cardAuth;
     final Signature signatureInstance;
 
+    
+
     EPurse() {
         cardId = new byte[4];
         balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
@@ -44,7 +47,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalPubKey = JCSystem.makeTransientObjectArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
-        
+        transientData = JCSystem.makeTransientByteArray((short) (8), JCSystem.CLEAR_ON_RESET);
+
         cardAuth = new CardAuth(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
@@ -78,6 +82,9 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
             case 3:
                 System.out.println("Authenticating the terminal...");
                 cardAuth.authenticate3(apdu);
+                break;
+            case 4:
+                System.out.println("Lekker bezig mannn");
                 break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);

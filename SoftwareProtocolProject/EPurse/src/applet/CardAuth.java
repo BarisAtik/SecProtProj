@@ -31,18 +31,14 @@ public class CardAuth {
         apdu.setIncomingAndReceive();
 
         // unpack data of 8 bytes to terminalID and cardId, both 4 bytes
-        byte[] data = new byte[dataLength];
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, data, (short) 0, dataLength);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
         
-        byte[] terminalId = new byte[4];
-        byte[] cert = new byte[4];
-        
-        Util.arrayCopy(data, (short) 0, terminalId, (short) 0, (short) 4);
-        Util.arrayCopy(data, (short) 4, cert, (short) 0, (short) 4);
+        Util.arrayCopy(purse.transientData, (short) 0, purse.terminalId, (short) 0, (short) 4);
+        Util.arrayCopy(purse.transientData, (short) 4, purse.terminalSignature, (short) 0, (short) 4);
 
         // Convert to ints
-        int terminalIdInt = ByteBuffer.wrap(terminalId).getInt();
-        int certInt = ByteBuffer.wrap(cert).getInt();
+        int terminalIdInt = ByteBuffer.wrap(purse.terminalId).getInt();
+        int certInt = ByteBuffer.wrap(purse.terminalSignature).getInt();
 
         // Print the terminal ID
         System.out.println("Terminal ID: " + terminalIdInt);
@@ -82,13 +78,11 @@ public class CardAuth {
         apdu.setIncomingAndReceive();
         
         //unpack incremented challenge
-        // unpack data of 
-        byte[] data = new byte[4];
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, data, (short) 0, (short) 4);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) 4);
 
         byte[] challengeResponse = new byte[4];
         
-        Util.arrayCopy(data, (short) 0, challengeResponse, (short) 0, (short) 4);
+        Util.arrayCopy(purse.transientData, (short) 0, challengeResponse, (short) 0, (short) 4);
 
         // Convert to ints
         int challengeResponseInt = ByteBuffer.wrap(challengeResponse).getInt();
@@ -120,8 +114,30 @@ public class CardAuth {
         // Read the data into the buffer
         apdu.setIncomingAndReceive();
 
+        //unpack incremented challenge
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) 4);
+
+        byte[] challengeResponse2 = new byte[4];
         
+        Util.arrayCopy(purse.transientData, (short) 0, challengeResponse2, (short) 0, (short) 4);        
         //######## END ARROW FIVE ########
+
+        // Sign the challenge
+        // Convert to ints (now this for testing)
+        int challengeResponseInt = ByteBuffer.wrap(challengeResponse2).getInt();
+
+        // Print the terminal ID
+        System.out.println("challengeResponse : " + challengeResponseInt);
+
+        //######## START ARROW SIX ########
+        apdu.setOutgoing();
+        apdu.setOutgoingLength((short) intToBytes(challengeResponseInt).length );
+
+        // Send the challenge
+        apdu.sendBytesLong(intToBytes(challengeResponseInt), (short) 0, (short) intToBytes(challengeResponseInt).length);
+
+        
+        //######## END ARROW SIX ########
     }
 
     public static byte[] intToBytes(int i) {
