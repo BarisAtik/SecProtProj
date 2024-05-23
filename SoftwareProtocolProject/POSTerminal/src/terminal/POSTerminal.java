@@ -5,6 +5,7 @@ import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 import java.util.List;
@@ -111,21 +112,22 @@ public class POSTerminal{
         // convert int terminalID to byte[]
         byte[] terminalIDBytes = intToBytes(terminalID);
         byte[] certBytes = intToBytes(cert);
+        
+        // Read the master public key file
+        
+        RSAPublicKey masterPublicKey = readX509PublicKey();
+
+        // Get the size of the master public key
+        int keySize = masterPublicKey.getModulus().bitLength() / 8;
+        // Print the key size
+        System.out.println("Key size: " + keySize);
+
         // Initialize the public key
+        byte[] mpk = new byte[128];
 
-
-        String masterPublicKey = "MIICWwIBAAKBgGpGtRZEWD/PfUHsl34jCeWe3o9doVqmppgN+/oVQuQApXpPCv2u5tFjNUU1nhxfOfpEn1HOSyr11QI7BVEAenFuwVqIRKKZiLfIZYR7y4wTfAmDyhP8s9qrE+EV299izCW13bb8n+444Lv3yWKBXKPpRlxAVhlVGP0CU6Z2gapDAgMBAAECgYARZL0ihdEDsIvJjFVG+akXAadfQ22zDm9Zl4BT78Lg2hI7MFCWMFfqkRgY2auk7RjqEu0YUHEQ+OcB1HMMTM29KJZWrm5EGLqL6RtSCPAb5Ti+avuVI9xqY6XyaLCvISKaca8aFFO5GJH93mGHvhruxyHfkz2wSIxBNkRqhDLNQQJBALhL3BD8jFrhSTDU6U063nXSPC04TtuGEkli00ifGCBnLeQFG7BYYIQZf9m+ktE9EL4n+a7Io3c4ikeL79yRVHMCQQCTn/KJrzp/y9aQ5oBA5EoCjwgbF51VE6p/kLx+o+/WhVeRdpDPXPPNnzkNrwPSnocK1aslZ2ExKRsTn3RUya7xAkEAqCqId3OLOw4hNA7Dh/Y0sfwRbw3XXxbart4ffz+0yzR7OnqyxloOT9vYvr7Xx1faZDmj6qooBwyvmROG3pQ6IwJAVryBmpgUPQYdGaH09SusuHglgRWM4XHemXkG5zmXL2nFG7iYON4aeVP2B64vBs8R9TG5jw6Asou+Vvc3OKIPYQJABPLa/kn6zLjkloLoO4rAMC3NnWN9mNusix7++t98bxS3MDXqivcFGLOhGin3rKFfrcIjR378oDsL0cWeLUpuLw==";
-        // try {
-        //     masterPublicKey = new String(Files.readAllBytes(Paths.get("/home/parallels/SecProtProj/SoftwareProtocolProject/POSTerminal/src/terminal/PrivateMasterKey.txt")));
-        // } catch (IOException e) {
-        //     e.printStackTrace();
-        // }
-    
-        // Convert the public key to a byte array
-        byte[] mpk = Base64.getDecoder().decode(masterPublicKey);
-        // byte[] mpk = masterPublicKey.getBytes();
-        // Print length of the public key
-        System.out.println("Length of the public key: " + mpk.length);
+        // Read the key PrivateMasterKey.pem from the file and store the RSAPrivatekey object 
+        
+        
         // concatenate terminalID and cert
         byte[] data = new byte[255];
         byte[] nonce = new byte[2]; // Assuming a 2-byte nonce
@@ -196,14 +198,27 @@ public class POSTerminal{
 
     }
     
-    // public static byte[] loadPublicKeyFromFile(String filename) throws Exception {
-    //     String publicKeyPEM = new String(Files.readAllBytes(Paths.get(filename)));
-        
-    //     publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----", "")
-    //                                .replace("-----END PUBLIC KEY-----", "")
-    //                                .replaceAll("\\s", "");
-
-    //     return Base64.getDecoder().decode(publicKeyPEM);
-    // }
+    public RSAPublicKey readX509PublicKey() {
+        RSAPublicKey publicKey = null;
+        try {
+            // Read the PEM file
+            String pemFile = "/home/parallels/SecProtProj/SoftwareProtocolProject/POSTerminal/src/terminal/PublicMasterKey.pem";
+            List<String> lines = Files.readAllLines(Paths.get(pemFile));
+            // Remove the first and last lines
+            lines.remove(0);
+            lines.remove(lines.size() - 1);
+            // Concatenate the remaining lines to a single String
+            String key = String.join("", lines);
+            // Decode the base64 String to a byte array
+            byte[] decodedKey = Base64.getDecoder().decode(key);
+            // Convert the byte array to a PublicKey
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedKey);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            publicKey = (RSAPublicKey) kf.generatePublic(spec);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return publicKey;
+    }
 
 }
