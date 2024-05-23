@@ -12,6 +12,7 @@ import javacard.security.KeyBuilder;
 import javacard.security.RSAPublicKey;
 import javacard.security.Signature;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 // import ISO7816 class
 import javacard.framework.ISO7816;
 
@@ -30,44 +31,59 @@ public class CardAuth {
         // Read the data into the buffer
         apdu.setIncomingAndReceive();
 
-        // unpack data of 8 bytes to terminalID and cardId, both 4 bytes
         Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
-        
         Util.arrayCopy(purse.transientData, (short) 0, purse.terminalId, (short) 0, (short) 4);
         Util.arrayCopy(purse.transientData, (short) 4, purse.terminalSignature, (short) 0, (short) 4);
+        // Copy terminalNonce
+        Util.arrayCopy(purse.transientData, (short) 8, purse.terminalNonce, (short) 0, (short) 2);
+        // Copy publickey
+        Util.arrayCopy(purse.transientData, (short) 10, purse.terminalPubKey, (short) 0, (short) 128);
 
-        // Convert to ints
-        int terminalIdInt = ByteBuffer.wrap(purse.terminalId).getInt();
-        int certInt = ByteBuffer.wrap(purse.terminalSignature).getInt();
+        // Print all the received data
+        System.out.println("Terminal ID: " + ByteBuffer.wrap(purse.terminalId).getInt());
+        System.out.println("Cert: " + ByteBuffer.wrap(purse.terminalSignature).getInt());
+        System.out.println("Nonce: " + ByteBuffer.wrap(purse.terminalNonce).getShort());
+        // Print terminal pubkey using bytes to base64
+        System.out.println("Pubkey: " + purse.terminalPubKey.toString());
 
-        // Print the terminal ID
-        System.out.println("Terminal ID: " + terminalIdInt);
-        System.out.println("Cert: " + certInt);
-        //######## END ARROW ONE ########
-
-        boolean auth = true;
-
-        // Check certificate
-        // check certificate en als die niet klopt set auth to false
-        if (!auth) { // TODO encryption shit with checking certificates. 
-            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-        }
+        // // unpack data of 8 bytes to terminalID and cardId, both 4 bytes
+        // Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
         
-        //######## START ARROW TWO ########
-        // Send int challenge=42 to the POSTerminal
-        short challenge = 42;
+        // Util.arrayCopy(purse.transientData, (short) 0, purse.terminalId, (short) 0, (short) 4);
+        // Util.arrayCopy(purse.transientData, (short) 4, purse.terminalSignature, (short) 0, (short) 4);
 
-        // Use the intToBytes function to convert the challenge to a byte array
-        byte[] challengeBytes = intToBytes(challenge);
+        // // Convert to ints
+        // int terminalIdInt = ByteBuffer.wrap(purse.terminalId).getInt();
+        // int certInt = ByteBuffer.wrap(purse.terminalSignature).getInt();
 
-        // Prepare the APDU
-        apdu.setOutgoing();
-        apdu.setOutgoingLength((short) challengeBytes.length);
+        // // Print the terminal ID
+        // System.out.println("Terminal ID: " + terminalIdInt);
+        // System.out.println("Cert: " + certInt);
+        // //######## END ARROW ONE ########
 
-        // Send the challenge
-        apdu.sendBytesLong(challengeBytes, (short) 0, (short) challengeBytes.length);
+        // boolean auth = true;
 
-        //######## END ARROW TWO ########
+        // // Check certificate
+        // // check certificate en als die niet klopt set auth to false
+        // if (!auth) { // TODO encryption shit with checking certificates. 
+        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        // }
+        
+        // //######## START ARROW TWO ########
+        // // Send int challenge=42 to the POSTerminal
+        // short challenge = 42;
+
+        // // Use the intToBytes function to convert the challenge to a byte array
+        // byte[] challengeBytes = intToBytes(challenge);
+
+        // // Prepare the APDU
+        // apdu.setOutgoing();
+        // apdu.setOutgoingLength((short) challengeBytes.length);
+
+        // // Send the challenge
+        // apdu.sendBytesLong(challengeBytes, (short) 0, (short) challengeBytes.length);
+
+        // //######## END ARROW TWO ########
     }
 
     public void authenticate2(APDU apdu){

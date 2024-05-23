@@ -7,6 +7,7 @@ import javax.smartcardio.CommandAPDU;
 import java.applet.Applet;
 import java.nio.ByteBuffer;
 import javacard.security.Signature;
+import javacard.security.RandomData;
 
 public class EPurse extends javacard.framework.Applet implements ISO7816 {
     // Constants (TO DO: Move to Constants.java)
@@ -18,8 +19,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected final byte[] state;
     protected final byte[] terminalId;
     protected final byte[] terminalSignature;
-    protected final Object[] terminalPubKey;
+    protected final byte[] terminalPubKey;
     protected final byte[] transientData;
+    protected final byte[] terminalNonce;
+    protected final byte[] nonce;
 
     // Persistent variables
     protected byte[] balance; 
@@ -32,8 +35,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     // Helper objects
     private final CardAuth cardAuth;
     final Signature signatureInstance;
+    final RandomData randomData;
 
-    
 
     EPurse() {
         cardId = new byte[4];
@@ -46,13 +49,15 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
         terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
-        terminalPubKey = JCSystem.makeTransientObjectArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
+        terminalPubKey = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
         transientData = JCSystem.makeTransientByteArray((short) (8), JCSystem.CLEAR_ON_RESET);
+        terminalNonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
+        nonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
 
         cardAuth = new CardAuth(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-
+        randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
         register();
     }
     
