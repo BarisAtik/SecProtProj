@@ -7,8 +7,14 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.security.interfaces.RSAPublicKey;
 import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 
 import java.util.Random;
 
@@ -30,7 +36,10 @@ public class InitTerminal {
     byte[] cardModulus;
     byte[] cardID;
     byte[] cardExpireDate;
-    
+
+    protected RSAPrivateKey masterPrivateKey;
+    protected RSAPublicKey masterPublicKey;
+
     // Helper Objects
     private final Utils utils;
     
@@ -40,17 +49,34 @@ public class InitTerminal {
         cardPubExp = new byte[3];
         cardID = new byte[4];
         cardExpireDate = new byte[4];
+        
+
         utils = new Utils();
     }
 
     public static void main(String[] arg) {
         InitTerminal terminal = new InitTerminal();
+        terminal.setMasterKeyPair();
         // Initialize simulator
         JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
         terminal.utils.selectApplet(simulator);
         terminal.sendCardIDAndExpireDate(simulator);
-        terminal.sendMasterPublicKey(simulator);
-        terminal.createCertificate(simulator);
+        terminal.sendMasterPublicKey(simulator, terminal.masterPublicKey);
+        terminal.createCertificate(simulator, terminal.masterPrivateKey);
+    }
+
+    public void setMasterKeyPair(){
+        // Generate a new key pair
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(1024);
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            masterPrivateKey = (RSAPrivateKey) keyPair.getPrivate();
+            masterPublicKey = (RSAPublicKey) keyPair.getPublic();
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+        }
     }
 
     public void sendCardIDAndExpireDate(JavaxSmartCardInterface simulator){        
@@ -76,9 +102,8 @@ public class InitTerminal {
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
     }
 
-    public void sendMasterPublicKey(JavaxSmartCardInterface simulator){
-        //
-        RSAPublicKey masterPublicKey = utils.readX509PublicKey();
+    public void sendMasterPublicKey(JavaxSmartCardInterface simulator, RSAPublicKey masterPublicKey){
+        
         //System.out.println("Master Public Key on Init Terminal: " +  masterPublicKey.toString());
 
         byte[] pubexp = masterPublicKey.getPublicExponent().toByteArray();
@@ -99,9 +124,7 @@ public class InitTerminal {
         System.arraycopy(responseData, 3, cardModulus, 0, 128);
     }
 
-    public void createCertificate(JavaxSmartCardInterface simulator){
-        // Read private key from file
-        RSAPrivateKey masterPrivateKey = utils.readPKCS8PrivateKey();
+    public void createCertificate(JavaxSmartCardInterface simulator, RSAPrivateKey masterPrivateKey){
 
         // create certificate
         // cardID (4 bytes)|| expireDate (4 bytes) || cardModulus (128 bytes)
@@ -110,18 +133,25 @@ public class InitTerminal {
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
         System.arraycopy(cardModulus, 0, data, 8, 128);
 
+        //System.out.println("(InitTerminal) cardID: " + utils.toHexString(cardID));
+        //System.out.println("(InitTerminal) cardExpireDate: " + utils.toHexString(cardExpireDate));
+        //System.out.println("(InitTerminal) cardModulus: " + utils.toHexString(cardModulus));
+        System.out.println("(InitTerminal) Data which has been send: " + utils.toHexString(data));
+    
+        byte[] certificate = new byte[136];
+
         // Sign the data with master private key
         try {
-            byte[] certificate = utils.sign(data, masterPrivateKey);
-            System.out.println("Certificate: " + utils.toHexString(certificate));
+            certificate = utils.sign(data, masterPrivateKey);
+            System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
         } catch (Exception e) {
             // Handle the exception here
-            e.printStackTrace();
-            byte[] certificate = new byte[0];
+            e.printStackTrace();   
         }
 
         // Send the certificate to the card
-
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, certificate);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
         
         
     }

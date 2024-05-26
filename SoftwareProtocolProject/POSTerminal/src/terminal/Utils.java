@@ -65,56 +65,10 @@ public class Utils {
     }
 
     public byte[] sign(byte[] content, RSAPrivateKey key) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        Signature signer = Signature.getInstance("SHA1withRSA");
+        Signature signer = Signature.getInstance("SHA1WithRSA");
         signer.initSign(key);
         signer.update(content);
         return signer.sign();
     }
     
-    public RSAPublicKey readX509PublicKey() {
-        RSAPublicKey publicKey = null;
-        try {
-            // Read the PEM file
-            String pemFile = "/home/parallels/SecProtProj/SoftwareProtocolProject/POSTerminal/src/terminal/PublicMasterKey.pem";
-            List<String> lines = Files.readAllLines(Paths.get(pemFile));
-            // Remove the first and last lines
-            lines.remove(0);
-            lines.remove(lines.size() - 1);
-            // Concatenate the remaining lines to a single String
-            String key = String.join("", lines);
-            // Decode the base64 String to a byte array
-            byte[] decodedKey = Base64.getDecoder().decode(key);
-            // Convert the byte array to a PublicKey
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedKey);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            publicKey = (RSAPublicKey) kf.generatePublic(spec);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return publicKey;
-    }
-
-    public RSAPrivateKey readPKCS8PrivateKey() {
-        RSAPrivateKey privateKey = null;
-        try {
-            // Read the PEM file
-            String filePath = "/home/parallels/SecProtProj/SoftwareProtocolProject/POSTerminal/src/terminal/PrivateMasterKey2.pem";
-            String key = new String(Files.readAllBytes(Paths.get(filePath)));
-        
-            // Remove the PEM headers and footers
-            key = key.replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                    .replace("-----END RSA PRIVATE KEY-----", "")
-                    .replaceAll("\\s", "");  // Remove all whitespace characters
-
-            // Decode the base64 String to a byte array
-            byte[] encodedPrivateKey = Base64.getDecoder().decode(key);;
-            // Convert the byte array to a PublicKey
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(encodedPrivateKey);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            privateKey = kf.generatePrivate(spec);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return privateKey;
-    }
 }

@@ -8,6 +8,8 @@ import javacard.security.KeyBuilder;
 import javacard.security.KeyPair;
 import javacard.security.RSAPrivateKey;
 import javacard.security.RSAPublicKey;
+import javacard.security.Signature;
+
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -84,15 +86,41 @@ public class Init {
         BigInteger bigIntExponent = new BigInteger(bufferExponent);
         //System.out.println("Exponent cardPublic: " + bigIntExponent);
 
-        String hexModulus = new BigInteger(1, bufferModulus).toString();
-        //System.out.println("Modulus cardPublic: " + hexModulus);
+        
+        String hexModulus = new BigInteger(1, bufferModulus).toString(16);
+        System.out.println("(EPurse) Modulus cardPublic: " + hexModulus);
 
         // Send public key to back-end to get it signed
         apdu.setOutgoingAndSend((short) 0, (short) 131);
     }
 
     public void setCertificate(APDU apdu){
+        byte[] buffer = apdu.getBuffer();
+        apdu.setIncomingAndReceive();
 
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardCertificate, (short) 0, (short) 128);
+
+        // copy purse.cardId + purse.expireDateUnix + purse.cardCertificate to transientData
+        Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) 4);
+        Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) 4, (short) 4);
+        purse.cardPubKey.getModulus(purse.transientData, (short) 8);
+
+        //System.out.println("(EPurse) cardID: " + toHexString(purse.cardId));
+        //System.out.println("(EPurse) cardExpireDate: " + toHexString(purse.expireDateUnix));
+        System.out.println("(EPurse) transientdata: " + toHexString(purse.transientData));
+        //System.out.println("(EPurse) certificate: " + toHexString(purse.cardCertificate));
+
+        // Verify the certificate with master public key
+        purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
+        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 136, purse.cardCertificate,(short) 0, (short)128);
+        System.out.println("(EPurse) Certificate verified: " + verified);
     }
 
+    public String toHexString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b: bytes) {
+          sb.append(String.format("%02X ", b));
+        }
+        return sb.toString();
+    }
 }

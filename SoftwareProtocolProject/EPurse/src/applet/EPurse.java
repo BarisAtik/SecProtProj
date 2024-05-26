@@ -13,7 +13,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     // Constants (TO DO: Move to Constants.java)
     final static short ID_SIZE = 4;
     final static short COUNTER_SIZE = 4;
-    final static short SIGNATURE_SIZE = 4;//256;
+    final static short SIGNATURE_SIZE = 128;//256;
 
     // Transient variables
     protected final byte[] state;
@@ -28,6 +28,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected byte[] balance; 
     protected byte[] cardCounter; 
     protected byte[] cardId;
+    protected byte[] cardCertificate;
     protected final byte[] expireDateUnix;
     protected javacard.security.RSAPrivateKey cardPrivKey;
     protected javacard.security.RSAPublicKey cardPubKey;
@@ -48,6 +49,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         cardCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         expireDateUnix = new byte[]{0x00, 0x00, 0x00, 0x00};
+        cardCertificate = new byte[128];
         blocked = false;
         initialized = false;
 
@@ -74,7 +76,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     public void process(APDU apdu) throws ISOException, APDUException { 
         byte[] buffer = apdu.getBuffer();
         byte ins = buffer[OFFSET_INS];
-        System.out.println("INS: " + ins);
+        System.out.println("(EPurse) INS: " + ins);
 
         // Ignore the APDU that selects this applet
         if (selectingApplet()) {
@@ -83,30 +85,30 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
 
         switch (ins) {
             case 1: // Authenticate the card 
-                System.out.println("Authenticating the card...");
+                System.out.println("(EPurse) Authenticating the card...");
                 cardAuth.authenticate1(apdu);
                 break;
             case 2: 
-                System.out.println("Checking the response...");
+                System.out.println("(EPurse) Checking the response...");
                 cardAuth.authenticate2(apdu);
                 break;
             case 3:
-                System.out.println("Authenticating the terminal...");
+                System.out.println("(EPurse) Authenticating the terminal...");
                 cardAuth.authenticate3(apdu);
                 break;
             case 4:
                 System.out.println("Lekker bezig mannn");
                 break;
             case 5:
-                System.out.println("Setting card ID and expire date...");
+                System.out.println("(EPurse) Setting card ID and expire date...");
                 init.setCardIdAndExpireDate(apdu);
                 break;
             case 6:
-                System.out.println("Generating keypairs...");
+                System.out.println("(EPurse) Generating keypairs...");
                 init.generateKeypairs(apdu);
                 break;
             case 7:
-                System.out.println("Setting certificate...");
+                System.out.println("(EPurse) Setting certificate...");
                 init.setCertificate(apdu);
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
