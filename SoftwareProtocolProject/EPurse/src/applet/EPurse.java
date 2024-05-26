@@ -29,11 +29,16 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected byte[] cardCounter; 
     protected byte[] cardId;
     protected final byte[] expireDateUnix;
+    protected javacard.security.RSAPrivateKey cardPrivKey;
+    protected javacard.security.RSAPublicKey cardPubKey;
+    protected javacard.security.RSAPublicKey masterPubKey;
     protected boolean blocked;
     protected boolean initialized;
+    
 
     // Helper objects
     private final CardAuth cardAuth;
+    private final Init init;
     final Signature signatureInstance;
     final RandomData randomData;
 
@@ -50,11 +55,12 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalPubKey = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
-        transientData = JCSystem.makeTransientByteArray((short) (8), JCSystem.CLEAR_ON_RESET);
+        transientData = JCSystem.makeTransientByteArray((short) 255, JCSystem.CLEAR_ON_RESET);
         terminalNonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
         nonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
 
         cardAuth = new CardAuth(this);
+        init = new Init(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
         randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
@@ -91,6 +97,17 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
             case 4:
                 System.out.println("Lekker bezig mannn");
                 break;
+            case 5:
+                System.out.println("Setting card ID and expire date...");
+                init.setCardIdAndExpireDate(apdu);
+                break;
+            case 6:
+                System.out.println("Generating keypairs...");
+                init.generateKeypairs(apdu);
+                break;
+            case 7:
+                System.out.println("Setting certificate...");
+                init.setCertificate(apdu);
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
                 // byte[] helloWorldBytes = "Hello World is the best line".getBytes();

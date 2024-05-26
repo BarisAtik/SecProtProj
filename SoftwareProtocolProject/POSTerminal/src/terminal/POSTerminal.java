@@ -37,6 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+
 import java.math.BigInteger;
 
 import applet.EPurse;
@@ -48,23 +49,20 @@ public class POSTerminal{
     private SecureRandom secureRandom;
     private byte[] terminalCounter;
 
-    //private JavaxSmartCardInterface simulatorInterface; // SIM
-
-    static final byte[] EPURSE_APPLET_AID = { (byte) 0x3B, (byte) 0x29,
-            (byte) 0x63, (byte) 0x61, (byte) 0x6C, (byte) 0x63, (byte) 0x01 };
-    static final String EPURSE_APPLET_AID_string = "3B2963616C6301";
-
-    static final CommandAPDU SELECT_APDU = new CommandAPDU(
-    		(byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00, EPURSE_APPLET_AID);
+    protected javacard.security.RSAPrivateKey terminalPrivKey;
+    protected javacard.security.RSAPublicKey terminalPubKey;
+    protected javacard.security.RSAPublicKey backendPubKey;
+    private final Utils utils;
     
     CardChannel applet;
 
     public POSTerminal() {
         terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x25}; 
-        secureRandom = new SecureRandom(); // Initialize SecureRandom
+        utils = new Utils();
+        secureRandom = new SecureRandom(); 
         // Create simulator and install applet
         JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
-        selectApplet(simulator);
+        utils.selectApplet(simulator);
 
         // Authentication of the EPurse
         authenticateCard(simulator, 69, 3742, terminalCounter);
@@ -73,49 +71,21 @@ public class POSTerminal{
         Scanner scanner = new Scanner(System.in);
         System.out.println("Enter a command: ");
         int command = scanner.nextInt();
-        sendCommandToApplet(simulator, command);
+        utils.sendCommandToApplet(simulator, command);
     }
 
     public static void main(String[] arg) {
         POSTerminal terminal = new POSTerminal();
     }
 
-    public static String toHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b: bytes) {
-          sb.append(String.format("%02X ", b));
-        }
-        return sb.toString();
-    }
-
-    private void selectApplet(JavaxSmartCardInterface simulator){
-        AID EPURSE_AppletAID = new AID(EPURSE_APPLET_AID,(byte)0,(byte)7);
-        simulator.installApplet(EPURSE_AppletAID, EPurse.class);
-
-        CommandAPDU SELECT_APDU = new CommandAPDU( (byte) 0x00, (byte) 0xA4, (byte) 0x04, (byte) 0x00,EPURSE_APPLET_AID);
-        ResponseAPDU response = simulator.transmitCommand(SELECT_APDU);
-    }
-
-    private void sendCommandToApplet(JavaxSmartCardInterface simulator, int command){
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) command, (byte) 0x00, (byte) 0x00);
-        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
-        System.out.println("Response: " + toHexString(response.getBytes()));
-    }
-
-    public static byte[] intToBytes(int i) {
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.putInt(i);
-        return bb.array();
-    }
-
     public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID, int cert, byte[] terminalCounter){
         // convert int terminalID to byte[]
-        byte[] terminalIDBytes = intToBytes(terminalID);
-        byte[] certBytes = intToBytes(cert);
+        byte[] terminalIDBytes = utils.intToBytes(terminalID);
+        byte[] certBytes = utils.intToBytes(cert);
         
         // Read the master public key file
         
-        RSAPublicKey masterPublicKey = readX509PublicKey();
+        RSAPublicKey masterPublicKey = utils.readX509PublicKey();
 
         // Get the size of the master public key
         int keySize = masterPublicKey.getModulus().bitLength() / 8;
@@ -126,7 +96,6 @@ public class POSTerminal{
         byte[] mpk = new byte[128];
 
         // Read the key PrivateMasterKey.pem from the file and store the RSAPrivatekey object 
-        
         
         // concatenate terminalID and cert
         byte[] data = new byte[255];
@@ -198,27 +167,6 @@ public class POSTerminal{
 
     }
     
-    public RSAPublicKey readX509PublicKey() {
-        RSAPublicKey publicKey = null;
-        try {
-            // Read the PEM file
-            String pemFile = "/home/parallels/SecProtProj/SoftwareProtocolProject/POSTerminal/src/terminal/PublicMasterKey.pem";
-            List<String> lines = Files.readAllLines(Paths.get(pemFile));
-            // Remove the first and last lines
-            lines.remove(0);
-            lines.remove(lines.size() - 1);
-            // Concatenate the remaining lines to a single String
-            String key = String.join("", lines);
-            // Decode the base64 String to a byte array
-            byte[] decodedKey = Base64.getDecoder().decode(key);
-            // Convert the byte array to a PublicKey
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(decodedKey);
-            KeyFactory kf = KeyFactory.getInstance("RSA");
-            publicKey = (RSAPublicKey) kf.generatePublic(spec);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return publicKey;
-    }
+    
 
 }
