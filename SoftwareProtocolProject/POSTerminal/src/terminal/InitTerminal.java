@@ -109,6 +109,19 @@ public class InitTerminal {
         byte[] pubexp = masterPublicKey.getPublicExponent().toByteArray();
         byte[] modulus = masterPublicKey.getModulus().toByteArray();
 
+        // Print the hex representation of the public exponent and modulus
+        // System.out.println("Public Exponent: " + utils.toHexString(pubexp));
+        // System.out.println("Modulus: " + utils.toHexString(modulus));
+        // System.out.println("Modulus: " + masterPublicKey.getModulus().toString(16));
+        
+        // Cut the first byte of the modulus which is always 0x00
+        byte[] modulusWithoutFirstByte = new byte[modulus.length - 1];
+        System.arraycopy(modulus, 1, modulusWithoutFirstByte, 0, modulus.length - 1);
+
+        //System.out.println("Modulus without first byte: " + utils.toHexString(modulusWithoutFirstByte));
+        modulus = modulusWithoutFirstByte;
+        //System.out.println("Modulus length: " + modulus.length);
+
         byte[] data = new byte[pubexp.length + modulus.length];
         
         System.arraycopy(pubexp, 0, data, 0, pubexp.length);
@@ -119,6 +132,11 @@ public class InitTerminal {
 
         // Check the response data
         byte[] responseData = response.getData();
+        // Check the length of the response data
+        if (responseData.length != 131) {
+            System.out.println("Error: Response data length is not 131 bytes");
+            return;
+        }
         // Read the card public exponent (3 bytes) and modulus (128 bytes)
         System.arraycopy(responseData, 0, cardPubExp, 0, 3);
         System.arraycopy(responseData, 3, cardModulus, 0, 128);
@@ -128,7 +146,7 @@ public class InitTerminal {
 
         // create certificate
         // cardID (4 bytes)|| expireDate (4 bytes) || cardModulus (128 bytes)
-        byte[] data = new byte[136];
+        byte[] data = new byte[137];
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
         System.arraycopy(cardModulus, 0, data, 8, 128);
@@ -136,7 +154,7 @@ public class InitTerminal {
         //System.out.println("(InitTerminal) cardID: " + utils.toHexString(cardID));
         //System.out.println("(InitTerminal) cardExpireDate: " + utils.toHexString(cardExpireDate));
         //System.out.println("(InitTerminal) cardModulus: " + utils.toHexString(cardModulus));
-        System.out.println("(InitTerminal) Data which has been send: " + utils.toHexString(data));
+        //System.out.println("(InitTerminal) Data which has been send: " + utils.toHexString(data));
     
         byte[] certificate = new byte[136];
 
@@ -144,6 +162,16 @@ public class InitTerminal {
         try {
             certificate = utils.sign(data, masterPrivateKey);
             System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
+            System.out.println("(InitTerminal) Certificate length: " + certificate.length);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
+
+        // Verify the certificate with master public key
+        try {
+            boolean verified = utils.verify(data, certificate, masterPublicKey);
+            System.out.println("(InitTerminal) Certificate verified: " + verified);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   

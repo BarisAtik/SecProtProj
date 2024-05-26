@@ -34,15 +34,10 @@ public class Init {
     }
 
     public void generateKeypairs(APDU apdu){
-        // m_privateKey = KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PRIVATE,KeyBuilder.LENGTH_RSA_1024,false); 
-        // m_publicKey = KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC,KeyBuilder.LENGTH_RSA_1024,true); 
-        // m_keyPair = new KeyPair(KeyPair.ALG_RSA, (short) m_publicKey.getSize());
-
         byte[] buffer = apdu.getBuffer();
-        short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
         apdu.setIncomingAndReceive();
 
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) 131);
 
         // set exponent and modulus
         purse.masterPubKey = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
@@ -50,6 +45,7 @@ public class Init {
         purse.masterPubKey.setModulus(purse.transientData, (short) 3, (short) 128);
 
         System.out.println("Master public key has been set.");
+        //System.out.println("Master public key: " + purse.masterPubKey.toString());
 
         // ################## DEBUG ##################
         // Print exponent and modulus
@@ -65,7 +61,6 @@ public class Init {
         // String hexModulus = new BigInteger(1, bufferModulus).toString();
         // System.out.println("Modulus: " + hexModulus);
 
-        
         // Step 5 - Init protocol
         KeyPair keyPair = new KeyPair(KeyPair.ALG_RSA, KeyBuilder.LENGTH_RSA_1024);
         keyPair.genKeyPair();
@@ -88,7 +83,7 @@ public class Init {
 
         
         String hexModulus = new BigInteger(1, bufferModulus).toString(16);
-        System.out.println("(EPurse) Modulus cardPublic: " + hexModulus);
+        //System.out.println("(EPurse) Modulus cardPublic: " + hexModulus);
 
         // Send public key to back-end to get it signed
         apdu.setOutgoingAndSend((short) 0, (short) 131);
@@ -103,16 +98,20 @@ public class Init {
         // copy purse.cardId + purse.expireDateUnix + purse.cardCertificate to transientData
         Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) 4);
         Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) 4, (short) 4);
-        purse.cardPubKey.getModulus(purse.transientData, (short) 8);
+        
+        byte[] cardModulus = new byte[128];
+        purse.cardPubKey.getModulus(cardModulus, (short) 0);
+
+        Util.arrayCopy(cardModulus, (short) 0, purse.transientData, (short) 8, (short) 128);
 
         //System.out.println("(EPurse) cardID: " + toHexString(purse.cardId));
         //System.out.println("(EPurse) cardExpireDate: " + toHexString(purse.expireDateUnix));
-        System.out.println("(EPurse) transientdata: " + toHexString(purse.transientData));
+        //System.out.println("(EPurse) transientdata: " + toHexString(purse.transientData));
         //System.out.println("(EPurse) certificate: " + toHexString(purse.cardCertificate));
 
         // Verify the certificate with master public key
         purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 136, purse.cardCertificate,(short) 0, (short)128);
+        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 136, purse.cardCertificate, (short) 0, (short) 128);
         System.out.println("(EPurse) Certificate verified: " + verified);
     }
 

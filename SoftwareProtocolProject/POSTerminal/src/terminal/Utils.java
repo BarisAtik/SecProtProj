@@ -70,5 +70,12 @@ public class Utils {
         signer.update(content);
         return signer.sign();
     }
+
+    public boolean verify(byte[] content, byte[] signature, RSAPublicKey key) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        Signature verifier = Signature.getInstance("SHA1WithRSA");
+        verifier.initVerify(key);
+        verifier.update(content);
+        return verifier.verify(signature);
+    }
     
 }
