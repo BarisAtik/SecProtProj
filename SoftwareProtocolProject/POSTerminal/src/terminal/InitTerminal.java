@@ -168,14 +168,14 @@ public class InitTerminal {
             e.printStackTrace();   
         }
 
-        // Verify the certificate with master public key
-        try {
-            boolean verified = utils.verify(data, certificate, masterPublicKey);
-            System.out.println("(InitTerminal) Certificate verified: " + verified);
-        } catch (Exception e) {
-            // Handle the exception here
-            e.printStackTrace();   
-        }
+        // DEBUG: Verify the certificate with master public key
+        // try {
+        //     boolean verified = utils.verify(data, certificate, masterPublicKey);
+        //     System.out.println("(InitTerminal) Certificate verified: " + verified);
+        // } catch (Exception e) {
+        //     // Handle the exception here
+        //     e.printStackTrace();   
+        // }
 
         // Send the certificate to the card
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, certificate);
