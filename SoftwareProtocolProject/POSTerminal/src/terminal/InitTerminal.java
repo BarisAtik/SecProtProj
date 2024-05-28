@@ -146,7 +146,7 @@ public class InitTerminal {
 
         // create certificate
         // cardID (4 bytes)|| expireDate (4 bytes) || cardModulus (128 bytes)
-        byte[] data = new byte[137];
+        byte[] data = new byte[136];
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
         System.arraycopy(cardModulus, 0, data, 8, 128);
@@ -162,7 +162,7 @@ public class InitTerminal {
         try {
             certificate = utils.sign(data, masterPrivateKey);
             System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
-            System.out.println("(InitTerminal) Certificate length: " + certificate.length);
+            //System.out.println("(InitTerminal) Certificate length: " + certificate.length);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   

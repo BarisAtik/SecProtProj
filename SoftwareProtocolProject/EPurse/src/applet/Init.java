@@ -99,15 +99,17 @@ public class Init {
         Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) 4);
         Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) 4, (short) 4);
         
-        byte[] cardModulus = new byte[128];
-        purse.cardPubKey.getModulus(cardModulus, (short) 0);
+        //byte[] cardModulus = new byte[128];
+        purse.cardPubKey.getModulus(purse.transientData, (short) 8);
 
-        Util.arrayCopy(cardModulus, (short) 0, purse.transientData, (short) 8, (short) 128);
+        //Util.arrayCopy(cardModulus, (short) 0, purse.transientData, (short) 8, (short) 128);
 
+        //System.out.println("(EPurse) cardModulus: " + toHexString(cardModulus));
         //System.out.println("(EPurse) cardID: " + toHexString(purse.cardId));
         //System.out.println("(EPurse) cardExpireDate: " + toHexString(purse.expireDateUnix));
         //System.out.println("(EPurse) transientdata: " + toHexString(purse.transientData));
         //System.out.println("(EPurse) certificate: " + toHexString(purse.cardCertificate));
+        //System.out.println("(EPurse) certificate length " + purse.cardCertificate.length);
 
         // Verify the certificate with master public key
         purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
