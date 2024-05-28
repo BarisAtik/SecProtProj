@@ -72,17 +72,17 @@ public class Init {
         purse.cardPubKey.getModulus(buffer, (short) 3);
 
         // DEBUG - Print card public key
-        byte[] bufferExponent = new byte[3]; // Adjust the size as needed
-        byte[] bufferModulus = new byte[128]; // Adjust the size as needed
-        short offset = 0;
+        //byte[] bufferExponent = new byte[3]; // Adjust the size as needed
+        //byte[] bufferModulus = new byte[128]; // Adjust the size as needed
+        //short offset = 0;
 
-        purse.cardPubKey.getExponent(bufferExponent, (short) 0);
-        purse.cardPubKey.getModulus(bufferModulus, (short) 0);
-        BigInteger bigIntExponent = new BigInteger(bufferExponent);
+        //purse.cardPubKey.getExponent(bufferExponent, (short) 0);
+        //purse.cardPubKey.getModulus(bufferModulus, (short) 0);
+        //BigInteger bigIntExponent = new BigInteger(bufferExponent);
         //System.out.println("Exponent cardPublic: " + bigIntExponent);
 
         
-        String hexModulus = new BigInteger(1, bufferModulus).toString(16);
+        //String hexModulus = new BigInteger(1, bufferModulus).toString(16);
         //System.out.println("(EPurse) Modulus cardPublic: " + hexModulus);
 
         // Send public key to back-end to get it signed
