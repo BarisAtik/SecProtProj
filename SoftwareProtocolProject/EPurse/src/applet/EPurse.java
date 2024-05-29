@@ -19,10 +19,11 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected final byte[] state;
     protected final byte[] terminalId;
     protected final byte[] terminalSignature;
-    protected final byte[] terminalPubKey;
+    protected final byte[] terminalModulus;
+    protected final byte[] terminalExponent;
     protected final byte[] transientData;
     protected final byte[] terminalNonce;
-    protected final byte[] nonce;
+    protected final byte[] cardNonce;
 
     // Persistent variables
     protected byte[] balance; 
@@ -41,7 +42,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     private final CardAuth cardAuth;
     private final Init init;
     final Signature signatureInstance;
-    final RandomData randomData;
+    final RandomData randomDataInstance;
 
 
     EPurse() {
@@ -53,19 +54,23 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         blocked = false;
         initialized = false;
 
+        // Card variables
         state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
+        transientData = JCSystem.makeTransientByteArray((short) 255, JCSystem.CLEAR_ON_RESET);
+        cardNonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT); 
+        
+        // Terminal variables
         terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
-        terminalPubKey = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
-        transientData = JCSystem.makeTransientByteArray((short) 255, JCSystem.CLEAR_ON_RESET);
-        terminalNonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
-        nonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
-
+        terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
+        terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);
+        terminalNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT);
+        
         cardAuth = new CardAuth(this);
         init = new Init(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
-        randomData = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
+        randomDataInstance = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
         register();
     }
     

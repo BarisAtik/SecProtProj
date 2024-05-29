@@ -29,10 +29,13 @@ import com.licel.jcardsim.smartcardio.JCardSimProvider;
 import com.licel.jcardsim.smartcardio.CardTerminalSimulator;
 import com.licel.jcardsim.smartcardio.CardSimulator;
 
+import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -48,108 +51,86 @@ import java.security.SecureRandom;
 public class POSTerminal{
     private SecureRandom secureRandom;
     private byte[] terminalCounter;
+    private int terminalID;
 
-    protected javacard.security.RSAPrivateKey terminalPrivKey;
-    protected javacard.security.RSAPublicKey terminalPubKey;
-    protected javacard.security.RSAPublicKey backendPubKey;
+    protected RSAPrivateKey terminalPrivKey;
+    protected RSAPublicKey terminalPubKey;
+    protected RSAPublicKey masterPubKey;
+
     private final Utils utils;
     
     CardChannel applet;
 
-    public POSTerminal() {
+    public POSTerminal(int terminalID) {
         terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x25}; 
         utils = new Utils();
         secureRandom = new SecureRandom(); 
-        // Create simulator and install applet
-        JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
-        utils.selectApplet(simulator);
+        this.terminalID = terminalID;
+    }
 
-        // Authentication of the EPurse
-        authenticateCard(simulator, 69, 3742, terminalCounter);
+    // public static void main(String[] arg) {
+    //     POSTerminal terminal = new POSTerminal(123);
+    //     terminal.setTerminalKeyPair();
         
-        // Get input from commandline and send it to the applet
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter a command: ");
-        int command = scanner.nextInt();
-        utils.sendCommandToApplet(simulator, command);
+    //     // Create simulator and install applet
+    //     JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
+    //     terminal.utils.selectApplet(simulator);
+
+    //     // Authentication of the EPurse
+    //     terminal.authenticateCard(simulator);
+        
+    //     // Get input from commandline and send it to the applet
+    //     Scanner scanner = new Scanner(System.in);
+    //     System.out.println("Enter a command: ");
+    //     int command = scanner.nextInt();
+    //     terminal.utils.sendCommandToApplet(simulator, command);
+    // }
+
+    public void setTerminalKeyPair(){
+         try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(1024);
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            terminalPrivKey = (RSAPrivateKey) keyPair.getPrivate();
+            terminalPubKey = (RSAPublicKey) keyPair.getPublic();
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+        }
     }
 
-    public static void main(String[] arg) {
-        POSTerminal terminal = new POSTerminal();
+    public byte[] getPublicModulus(){
+        byte[] modulus = terminalPubKey.getModulus().toByteArray();
+
+        byte[] modulusWithoutFirstByte = new byte[modulus.length - 1];
+        System.arraycopy(modulus, 1, modulusWithoutFirstByte, 0, modulus.length - 1);
+
+        return modulusWithoutFirstByte;
     }
 
-    public void authenticateCard(JavaxSmartCardInterface simulator, int terminalID, int cert, byte[] terminalCounter){
-        // convert int terminalID to byte[]
+    public void authenticateCard(JavaxSmartCardInterface simulator){
+        // Generate a random number as challenge
+        byte[] terminalNonce = new byte[4];
+        secureRandom.nextBytes(terminalNonce);
+        
+        // Send terminalID || terminalNonce || terminalExponent || terminalModulus
+        byte[] data = new byte[139];
         byte[] terminalIDBytes = utils.intToBytes(terminalID);
-        byte[] certBytes = utils.intToBytes(cert);
         
-        // Read the master public key file
-        
-        RSAPublicKey masterPublicKey = utils.readX509PublicKey();
-
-        // Get the size of the master public key
-        int keySize = masterPublicKey.getModulus().bitLength() / 8;
-        // Print the key size
-        System.out.println("Key size: " + keySize);
-
-        // Initialize the public key
-        byte[] mpk = new byte[128];
-
-        // Read the key PrivateMasterKey.pem from the file and store the RSAPrivatekey object 
-        
-        // concatenate terminalID and cert
-        byte[] data = new byte[255];
-        byte[] nonce = new byte[2]; // Assuming a 2-byte nonce
-        secureRandom.nextBytes(nonce);
+        byte[] terminalExponent = terminalPubKey.getPublicExponent().toByteArray();
+        byte[] terminalModulus = getPublicModulus();
 
         System.arraycopy(terminalIDBytes, 0, data, 0, 4);
-        System.arraycopy(certBytes, 0, data, 4, 4);
-        System.arraycopy(nonce, 0, data, 8, 2);
-        System.arraycopy(mpk, 0, data, 10, mpk.length);
+        System.arraycopy(terminalNonce, 0, data, 4, 4);
+        System.arraycopy(terminalExponent, 0, data, 8, 3);
+        System.arraycopy(terminalModulus, 0, data, 11, 128);
 
-        //######## START ARROW ONE ########
-        // Send the data to the applet
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
-        //CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
-        //CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, terminalIDBytes);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+
+        // Receive cardID || cardNonce || cardExpireDate || cardExp || cardMod
+        byte[] responseData = response.getData();
         
-        // //######## END ARROW ONE ########
-        
-        // //######## START ARROW TWO ########
-
-        // // Get the challenge from the response
-        // byte[] challenge = response.getData();
-        // // Cast back to int
-        // int challengeInt = ByteBuffer.wrap(challenge).getInt();
-        // System.out.println("Challenge: " + challengeInt);
-
-        // //######## END ARROW TWO ########
-
-
-        // // Check the challenge (for now just increment and send back)
-        // challengeInt++;
-        // challenge = intToBytes(challengeInt);
-        
-        
-        // //######## START ARROW THREE ########
-
-        // // Send instruction 2 to the applet with counter (IT IS NOW CHALLENGE INCREMENTED, MUST BE CHANGED)
-        // CommandAPDU commandAPDU2 = new CommandAPDU((byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0x00, challenge);
-        // ResponseAPDU response2 = simulator.transmitCommand(commandAPDU2);
-
-        // //######## END ARROW THREE ########
-
-
-        // //######## START ARROW FOUR ########
-
-        // // Get the response from the applet
-        // byte[] response2Data = response2.getData();
-        // int response2Int = ByteBuffer.wrap(response2Data).getInt();
-        // System.out.println("CardIDx x: " + response2Int);
-
-        // //######## END ARROW FOUR ########
-
 
 
         // //######## START ARROW FIVE ########
