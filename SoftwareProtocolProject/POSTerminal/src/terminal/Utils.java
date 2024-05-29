@@ -64,6 +64,11 @@ public class Utils {
         return bb.array();
     }
 
+    public int bytesToInt(byte[] bytes) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        return bb.getInt();
+    }
+
     public byte[] sign(byte[] content, RSAPrivateKey key) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signer = Signature.getInstance("SHA1WithRSA");
         signer.initSign(key);
@@ -77,5 +82,8 @@ public class Utils {
         verifier.update(content);
         return verifier.verify(signature);
     }
-    
+
+    public byte [] incrementByteArray(byte [] array) {
+        return intToBytes(bytesToInt(array) + 1);
+    }
 }

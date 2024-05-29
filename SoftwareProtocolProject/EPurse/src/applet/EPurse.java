@@ -34,6 +34,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected javacard.security.RSAPrivateKey cardPrivKey;
     protected javacard.security.RSAPublicKey cardPubKey;
     protected javacard.security.RSAPublicKey masterPubKey;
+    protected javacard.security.RSAPublicKey terminalPubKey;
     protected boolean blocked;
     protected boolean initialized;
     
@@ -43,7 +44,6 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     private final Init init;
     final Signature signatureInstance;
     final RandomData randomDataInstance;
-
 
     EPurse() {
         cardId = new byte[4];
@@ -57,7 +57,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         // Card variables
         state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
         transientData = JCSystem.makeTransientByteArray((short) 255, JCSystem.CLEAR_ON_RESET);
-        cardNonce = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT); 
+        cardNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT); 
         
         // Terminal variables
         terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
@@ -89,32 +89,30 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         }
 
         switch (ins) {
-            case 1: // Authenticate the card 
-                System.out.println("(EPurse) Authenticating the card...");
-                cardAuth.authenticate1(apdu);
-                break;
-            case 2: 
-                System.out.println("(EPurse) Checking the response...");
-                cardAuth.authenticate2(apdu);
-                break;
-            case 3:
-                System.out.println("(EPurse) Authenticating the terminal...");
-                cardAuth.authenticate3(apdu);
-                break;
-            case 4:
-                System.out.println("Lekker bezig mannn");
-                break;
-            case 5:
+            case 1:
                 System.out.println("(EPurse) Setting card ID and expire date...");
                 init.setCardIdAndExpireDate(apdu);
                 break;
-            case 6:
+            case 2:
                 System.out.println("(EPurse) Generating keypairs...");
                 init.generateKeypairs(apdu);
                 break;
-            case 7:
+            case 3:
                 System.out.println("(EPurse) Setting certificate...");
                 init.setCertificate(apdu);
+                break;
+            case 4:
+                System.out.println("(EPurse) Exchanging data...");
+                cardAuth.exchangeData(apdu);
+                break;
+            case 5:
+                System.out.println("(EPurse) Verifying certificate...");
+                cardAuth.exchangeCertificate(apdu);
+                break;
+            case 6: 
+                System.out.println("(EPurse) Verifying response...");
+                cardAuth.verifyResponse(apdu);
+                break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
                 // byte[] helloWorldBytes = "Hello World is the best line".getBytes();

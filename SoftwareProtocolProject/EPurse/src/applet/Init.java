@@ -44,7 +44,7 @@ public class Init {
         purse.masterPubKey.setExponent(purse.transientData, (short) 0, (short) 3);
         purse.masterPubKey.setModulus(purse.transientData, (short) 3, (short) 128);
 
-        System.out.println("Master public key has been set.");
+        //System.out.println("Master public key has been set.");
         //System.out.println("Master public key: " + purse.masterPubKey.toString());
 
         // ################## DEBUG ##################
@@ -114,7 +114,7 @@ public class Init {
         // Verify the certificate with master public key
         purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
         boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 136, purse.cardCertificate, (short) 0, (short) 128);
-        System.out.println("(EPurse) Certificate verified: " + verified);
+        // System.out.println("(EPurse) Certificate verified: " + verified);
     }
 
     public String toHexString(byte[] bytes) {

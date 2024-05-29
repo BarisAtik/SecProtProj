@@ -51,8 +51,18 @@ import java.security.SecureRandom;
 public class POSTerminal{
     private SecureRandom secureRandom;
     private byte[] terminalCounter;
-    private int terminalID;
+    public int terminalID;
+    private byte[] terminalCert;
 
+    // Variables for card
+    public byte[] cardID;
+    public byte[] cardNonce;
+    public byte[] cardExpireDate;
+    public byte[] cardExp;
+    public byte[] cardMod;
+    public byte[] cardCertificate;
+    public byte[] cardSignedNonce;
+    
     protected RSAPrivateKey terminalPrivKey;
     protected RSAPublicKey terminalPubKey;
     protected RSAPublicKey masterPubKey;
@@ -61,11 +71,22 @@ public class POSTerminal{
     
     CardChannel applet;
 
-    public POSTerminal(int terminalID) {
+    public POSTerminal(int terminalID, RSAPublicKey masterPubKey) {
         terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x25}; 
-        utils = new Utils();
-        secureRandom = new SecureRandom(); 
+        terminalCert = new byte[128];
+         
         this.terminalID = terminalID;
+        this.masterPubKey = masterPubKey;
+
+        cardID = new byte[4];
+        cardNonce = new byte[4];
+        cardExpireDate = new byte[4];
+        cardExp = new byte[3];
+        cardMod = new byte[128];
+        cardCertificate = new byte[128];
+
+        utils = new Utils();
+        secureRandom = new SecureRandom();
     }
 
     // public static void main(String[] arg) {
@@ -85,6 +106,10 @@ public class POSTerminal{
     //     int command = scanner.nextInt();
     //     terminal.utils.sendCommandToApplet(simulator, command);
     // }
+    
+    public void setTerminalCertificate(byte[] terminalCert){
+        this.terminalCert = terminalCert;
+    }
 
     public void setTerminalKeyPair(){
          try {
@@ -125,27 +150,58 @@ public class POSTerminal{
         System.arraycopy(terminalExponent, 0, data, 8, 3);
         System.arraycopy(terminalModulus, 0, data, 11, 128);
 
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, data);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
 
-        // Receive cardID || cardNonce || cardExpireDate || cardExp || cardMod
+        // Receive cardID (4 bytes)|| cardNonce (4 bytes) || cardExpireDate (4 bytes) || cardExp (3 bytes)|| cardMod (128 bytes)
         byte[] responseData = response.getData();
+        System.arraycopy(responseData, 0, cardID, 0, 4);
+        System.arraycopy(responseData, 4, cardNonce, 0, 4);
+        System.arraycopy(responseData, 8, cardExpireDate, 0, 4);
+        System.arraycopy(responseData, 12, cardExp, 0, 3);
+        System.arraycopy(responseData, 15, cardMod, 0, 128);
+
+        // Terminal sends Certificate to card
+        CommandAPDU commandAPDU2 = new CommandAPDU((byte) 0x00, (byte) 0x05, (byte) 0x00, (byte) 0x00, terminalCert);
+        ResponseAPDU response2 = simulator.transmitCommand(commandAPDU2);
+
+        byte[] response2Data = response2.getData();
+        System.arraycopy(response2Data, 0, cardCertificate, 0, 128);
+
+        // Verify contents with the certificate
+        byte[] dataToVerify = new byte[139];
+        System.arraycopy(cardID, 0, dataToVerify, 0, 4);
+        System.arraycopy(cardExpireDate, 0, dataToVerify, 4, 4);
+        System.arraycopy(cardExp, 0, dataToVerify, 8, 3);
+        System.arraycopy(cardMod, 0, dataToVerify, 11, 128);
+
+        try {
+            boolean verified = utils.verify(dataToVerify, cardCertificate, masterPubKey);
+            System.out.println("(POSTerminal) Certificate verified: " + verified);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
         
+        // Increment, sign and send signed nonce to card
+        byte[] incrementedNonce = utils.incrementByteArray(cardNonce);
+        byte[] signedNonce = utils.sign(incrementedNonce, terminalPrivKey);
+        
+        CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x06, (byte) 0x00, (byte) 0x00, signedNonce);
+        ResponseAPDU response3 = simulator.transmitCommand(commandAPDU3);
 
-
-        // //######## START ARROW FIVE ########
-        // CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, challenge);
-        // ResponseAPDU response3 = simulator.transmitCommand(commandAPDU3);
-        // //######## END ARROW FIVE ########
-
-
-
-        // //######## START ARROW SIX ########
-        //  byte[] response3Data = response2.getData();
-        // int response3Int = ByteBuffer.wrap(response3Data).getInt();
-        // System.out.println("CardIDx x: " + response3Int);
-        // //######## END ARROW SIX ########
-
+        // // Receive signed nonce from card
+        // byte[] response3Data = response3.getData();
+        // System.arraycopy(response3Data, 0, cardSignedNonce, 0, 4);
+        // // Check if the signed card nonce is correct
+        //byte [] incrementedTerminalNonce = utils.incrementByteArray(terminalNonce);
+        // try {
+        //     boolean verified = utils.verify(cardSignedNonce, incrementedTerminalNonce, masterPubKey);
+        //     System.out.println("(POSTerminal) Card nonce verified: " + verified);
+        // } catch (Exception e) {
+        //     // Handle the exception here
+        //     e.printStackTrace();   
+        // }
     }
     
     

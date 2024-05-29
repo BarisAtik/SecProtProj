@@ -8,6 +8,6 @@ public class Constants {
     public final static short EXPONENT_SIZE = 3;
 
     public final static short NONCE_SIZE = 4; 
-
+    public final static short SIGNATURE_SIZE = 128;
 
 }

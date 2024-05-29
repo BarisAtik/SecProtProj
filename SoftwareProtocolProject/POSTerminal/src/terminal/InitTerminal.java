@@ -42,7 +42,6 @@ public class InitTerminal {
 
     // Helper Objects
     private final Utils utils;
-    
 
     InitTerminal() {
         cardModulus = new byte[128];
@@ -50,7 +49,6 @@ public class InitTerminal {
         cardID = new byte[4];
         cardExpireDate = new byte[4];
         
-
         utils = new Utils();
     }
 
@@ -98,7 +96,7 @@ public class InitTerminal {
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
         
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x05, (byte) 0x00, (byte) 0x00, data);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
     }
 
@@ -127,7 +125,7 @@ public class InitTerminal {
         System.arraycopy(pubexp, 0, data, 0, pubexp.length);
         System.arraycopy(modulus, 0, data, pubexp.length, modulus.length);
         
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x06, (byte) 0x00, (byte) 0x00, data);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x02, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
 
         // Check the response data
@@ -146,22 +144,23 @@ public class InitTerminal {
 
         // create certificate
         // cardID (4 bytes)|| expireDate (4 bytes) || cardModulus (128 bytes)
-        byte[] data = new byte[136];
+        byte[] data = new byte[139];
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
-        System.arraycopy(cardModulus, 0, data, 8, 128);
+        System.arraycopy(cardPubExp, 0, data, 8, 3);
+        System.arraycopy(cardModulus, 0, data, 11, 128);
 
         //System.out.println("(InitTerminal) cardID: " + utils.toHexString(cardID));
         //System.out.println("(InitTerminal) cardExpireDate: " + utils.toHexString(cardExpireDate));
         //System.out.println("(InitTerminal) cardModulus: " + utils.toHexString(cardModulus));
         //System.out.println("(InitTerminal) Data which has been send: " + utils.toHexString(data));
     
-        byte[] certificate = new byte[136];
+        byte[] certificate = new byte[139];
 
         // Sign the data with master private key
         try {
             certificate = utils.sign(data, masterPrivateKey);
-            System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
+            // System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
             //System.out.println("(InitTerminal) Certificate length: " + certificate.length);
         } catch (Exception e) {
             // Handle the exception here
@@ -178,12 +177,36 @@ public class InitTerminal {
         // }
 
         // Send the certificate to the card
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, certificate);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, certificate);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
         
         
     }
     
+    public byte[] createTerminalCertificate(int terminalID, RSAPublicKey terminalPubKey, RSAPrivateKey masterPrivateKey){
+        byte[] terminalIDBytes = utils.intToBytes(terminalID);
+        byte[] terminalExponent = terminalPubKey.getPublicExponent().toByteArray();
+        byte[] terminalModulus = terminalPubKey.getModulus().toByteArray();
 
+        // Cut the first byte of the modulus which is always 0x00
+        byte[] modulusWithoutFirstByte = new byte[terminalModulus.length - 1];
+        System.arraycopy(terminalModulus, 1, modulusWithoutFirstByte, 0, terminalModulus.length - 1);
+        terminalModulus = modulusWithoutFirstByte;
+
+        byte[] data = new byte[135];
+        System.arraycopy(terminalIDBytes, 0, data, 0, 4);
+        System.arraycopy(terminalExponent, 0, data, 4, 3);
+        System.arraycopy(terminalModulus, 0, data, 7, 128);
+
+        byte[] certificate = new byte[135];
+        try {
+            certificate = utils.sign(data, masterPrivateKey);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
+
+        return certificate;
+    }
     
 }

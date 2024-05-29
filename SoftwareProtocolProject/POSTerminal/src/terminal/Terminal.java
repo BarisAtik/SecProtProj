@@ -42,7 +42,7 @@ public class Terminal {
     }
 
 
-    public void main(String[] arg) {
+    public static void main(String[] arg) {
         Terminal main = new Terminal();
         // Initialize simulator -- Connect to the applet
         JavaxSmartCardInterface simulator = new JavaxSmartCardInterface();
@@ -55,9 +55,13 @@ public class Terminal {
         backend.sendMasterPublicKey(simulator, backend.masterPublicKey);
         backend.createCertificate(simulator, backend.masterPrivateKey);
         
-        byte[] POSCert = backend.getPOSCertificate();
-        int POSTerminalID = backend.getPOSTerminalID(); 
-        POSTerminal terminal = new POSTerminal(123);
+        int terminalID = 123;
+
+        POSTerminal POSterminal = new POSTerminal(123, backend.masterPublicKey);
+        POSterminal.setTerminalKeyPair();
+        byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
+        POSterminal.setTerminalCertificate(terminalCert);
+        POSterminal.authenticateCard(simulator);
 
     }
     

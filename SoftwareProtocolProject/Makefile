@@ -47,6 +47,10 @@ runInit:
 	# Runs the terminal in the command line
 	java -cp util/jcardsim/${JCARDSIM}.jar:POSTerminal/bin:EPurse/bin terminal.InitTerminal
 
+runDemo:
+	# Runs the terminal in the command line
+	java -cp util/jcardsim/${JCARDSIM}.jar:POSTerminal/bin:EPurse/bin terminal.Terminal
+
 clean:
 	rm -rf EPurse/bin/*  
 	rm -rf POSTerminal/bin/*
