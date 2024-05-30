@@ -11,9 +11,6 @@ import java.applet.Applet;
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPublicKey;
 import javacard.security.Signature;
-
-import java.nio.ByteBuffer;
-// import ISO7816 class
 import javacard.framework.ISO7816;
 
 public class CardAuth {
@@ -99,25 +96,25 @@ public class CardAuth {
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
         apdu.setIncomingAndReceive();
-
         Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
-        
-        // Increment the terminalNonce and check if it matches the received signed nonce
-        
-        // Increment terminalNonce
-        purse.terminalNonce = 
-
+                
+        // Verify the signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.terminalNonce, (short) 0, (short) 4, purse.transientData, (short) 0, (short) 128);
+        boolean verified = purse.signatureInstance.verify(purse.cardNonce, (short) 0, (short) 4, purse.transientData, (short) 0, (short) 128);
+        System.out.println("(EPurse) Card Nonce Signature verified: " + verified);
         
-    }
+        if (!verified) {
+            System.out.println("Nonce Signature does not match!");
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
+        // Send sign(terminalNonce , cardPrivKey) back
+        purse.signatureInstance.init(purse.cardPrivKey, Signature.MODE_SIGN);
+        short signatureLength = purse.signatureInstance.sign(purse.terminalNonce, (short) 0, (short) 4, purse.transientData, (short) 0);
 
-    
+        apdu.setOutgoing();
+        apdu.setOutgoingLength(signatureLength);
+        apdu.sendBytesLong(purse.transientData, (short) 0, signatureLength);
 
-    public static byte[] intToBytes(int i) {
-        ByteBuffer bb = ByteBuffer.allocate(4);
-        bb.putInt(i);
-        return bb.array();
     }
 }

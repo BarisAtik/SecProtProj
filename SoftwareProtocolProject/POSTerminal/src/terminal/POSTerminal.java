@@ -1,5 +1,8 @@
 package terminal;
 
+import java.time.*;
+import java.time.temporal.ChronoUnit;
+
 import javacard.framework.AID;
 import javacard.framework.ISO7816;
 import javacard.framework.ISOException;
@@ -65,6 +68,7 @@ public class POSTerminal{
     
     protected RSAPrivateKey terminalPrivKey;
     protected RSAPublicKey terminalPubKey;
+    protected RSAPublicKey cardPubKey;
     protected RSAPublicKey masterPubKey;
 
     private final Utils utils;
@@ -134,6 +138,7 @@ public class POSTerminal{
     }
 
     public void authenticateCard(JavaxSmartCardInterface simulator){
+        //-----------------------------SEND TERMINAL DATA---------------------------------------------------
         // Generate a random number as challenge
         byte[] terminalNonce = new byte[4];
         secureRandom.nextBytes(terminalNonce);
@@ -153,6 +158,8 @@ public class POSTerminal{
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
 
+        //-----------------------------RECEIVE CARD DATA---------------------------------------------------
+
         // Receive cardID (4 bytes)|| cardNonce (4 bytes) || cardExpireDate (4 bytes) || cardExp (3 bytes)|| cardMod (128 bytes)
         byte[] responseData = response.getData();
         System.arraycopy(responseData, 0, cardID, 0, 4);
@@ -160,6 +167,13 @@ public class POSTerminal{
         System.arraycopy(responseData, 8, cardExpireDate, 0, 4);
         System.arraycopy(responseData, 12, cardExp, 0, 3);
         System.arraycopy(responseData, 15, cardMod, 0, 128);
+
+        // Make the public key of the card from the cardMod and the cardExp using setExponent and setModulus
+       try {
+            cardPubKey = utils.getPublicKey(cardExp, cardMod);
+       } catch (Exception e) {
+            e.printStackTrace();
+       }
 
         // Terminal sends Certificate to card
         CommandAPDU commandAPDU2 = new CommandAPDU((byte) 0x00, (byte) 0x05, (byte) 0x00, (byte) 0x00, terminalCert);
@@ -182,28 +196,38 @@ public class POSTerminal{
             // Handle the exception here
             e.printStackTrace();   
         }
+
+        //-----------------------------SIGN CARD NONCE---------------------------------------------------
         
-        // Increment, sign and send signed nonce to card
-        byte[] incrementedNonce = utils.incrementByteArray(cardNonce);
-        byte[] signedNonce = utils.sign(incrementedNonce, terminalPrivKey);
-        
-        CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x06, (byte) 0x00, (byte) 0x00, signedNonce);
+        // sign and send signed nonce to card
+        byte[] cardNonceSignature = new byte[128];
+        try {
+            cardNonceSignature = utils.sign(cardNonce, terminalPrivKey);
+            // System.out.println("(POSTerminal) cardNonceSignature size: " + cardNonceSignature.length); 
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+        }
+
+        // verifyResponse(cardNonceSignature);
+        CommandAPDU commandAPDU3 = new CommandAPDU((byte) 0x00, (byte) 0x06, (byte) 0x00, (byte) 0x00, cardNonceSignature);
         ResponseAPDU response3 = simulator.transmitCommand(commandAPDU3);
 
-        // // Receive signed nonce from card
-        // byte[] response3Data = response3.getData();
-        // System.arraycopy(response3Data, 0, cardSignedNonce, 0, 4);
-        // // Check if the signed card nonce is correct
-        //byte [] incrementedTerminalNonce = utils.incrementByteArray(terminalNonce);
-        // try {
-        //     boolean verified = utils.verify(cardSignedNonce, incrementedTerminalNonce, masterPubKey);
-        //     System.out.println("(POSTerminal) Card nonce verified: " + verified);
-        // } catch (Exception e) {
-        //     // Handle the exception here
-        //     e.printStackTrace();   
-        // }
-    }
+        // Receive sign(terminalNonce)
+        byte[] response3Data = response3.getData();
+        cardSignedNonce = response3Data;
     
-    
+        // Verify the signature        
+        try {
+            boolean verified = utils.verify(terminalNonce, cardSignedNonce, cardPubKey);
+            System.out.println("(POSTerminal) Terminal Nonce Signature verified: " + verified);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
 
+        //------------------------------CHECK EXPIRY DATE--------------------------------------------------
+
+        
+    }
 }

@@ -12,6 +12,7 @@ import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
+import java.math.BigInteger;
 
 import javax.smartcardio.*;
 import javacard.framework.AID;
@@ -67,6 +68,12 @@ public class Utils {
     public int bytesToInt(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         return bb.getInt();
+    }
+
+    public RSAPublicKey getPublicKey(byte[] exponent, byte[] modulus) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        RSAPublicKeySpec keySpec = new RSAPublicKeySpec(new BigInteger(1, modulus), new BigInteger(1, exponent));
+        return (RSAPublicKey) keyFactory.generatePublic(keySpec);
     }
 
     public byte[] sign(byte[] content, RSAPrivateKey key) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {

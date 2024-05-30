@@ -16,14 +16,14 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     final static short SIGNATURE_SIZE = 128;//256;
 
     // Transient variables
-    protected final byte[] state;
-    protected final byte[] terminalId;
-    protected final byte[] terminalSignature;
-    protected final byte[] terminalModulus;
-    protected final byte[] terminalExponent;
-    protected final byte[] transientData;
-    protected final byte[] terminalNonce;
-    protected final byte[] cardNonce;
+    protected byte[] state;
+    protected byte[] terminalId;
+    protected byte[] terminalSignature;
+    protected byte[] terminalModulus;
+    protected byte[] terminalExponent;
+    protected byte[] transientData;
+    protected byte[] terminalNonce;
+    protected byte[] cardNonce;
 
     // Persistent variables
     protected byte[] balance; 
