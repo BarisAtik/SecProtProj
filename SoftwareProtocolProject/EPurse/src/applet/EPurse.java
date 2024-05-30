@@ -113,6 +113,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
                 System.out.println("(EPurse) Verifying response...");
                 cardAuth.verifyResponse(apdu);
                 break;
+            case 16:
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
                 // byte[] helloWorldBytes = "Hello World is the best line".getBytes();

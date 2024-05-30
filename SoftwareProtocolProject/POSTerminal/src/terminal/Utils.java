@@ -10,6 +10,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.math.BigInteger;
@@ -57,6 +58,23 @@ public class Utils {
           sb.append(String.format("%02X ", b));
         }
         return sb.toString();
+    }
+
+    public byte[] getCurrentDate() {
+        Instant now = Instant.now();
+        int currentUnixTimestamp = (int) now.getEpochSecond();
+
+        return intToBytes(currentUnixTimestamp);
+    }
+
+    /*
+     * Compares two dates represented as byte arrays
+     * Returns true if date1 is before date2
+     * Returns false otherwise
+     * 
+     */
+    public boolean isPastDate(byte[] date, byte[] currentDate) {
+        return bytesToInt(date) < bytesToInt(currentDate);
     }
 
     public byte[] intToBytes(int i) {

@@ -92,6 +92,9 @@ public class InitTerminal {
         int expireDate = currentUnixTimestamp + 157680000; // 157680000 seconds = 5 years
         cardExpireDate = utils.intToBytes(expireDate);
 
+        // TEST: Give card a past expire date
+        // cardExpireDate = utils.intToBytes(157680000);        
+
         // Set the card ID and expire date
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);

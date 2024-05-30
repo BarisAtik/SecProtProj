@@ -227,7 +227,22 @@ public class POSTerminal{
         }
 
         //------------------------------CHECK EXPIRY DATE--------------------------------------------------
+        // Check if the card is expired 
+        byte[] currentDate = utils.getCurrentDate();
+        byte[] expireDate = new byte[4];
+        System.arraycopy(cardExpireDate, 0, expireDate, 0, 4);
 
-        
+        if(utils.isPastDate(expireDate, currentDate)){
+            System.out.println("(POSTerminal) Card is expired!");
+        } else {
+            System.out.println("(POSTerminal) Card is not expired!");
+        }
+
+        // If card is expired, send command to block the card
+        if(utils.isPastDate(expireDate, currentDate)){
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00);
+            ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
+        }
+
     }
 }
