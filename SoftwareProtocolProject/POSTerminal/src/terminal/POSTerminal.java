@@ -252,19 +252,19 @@ public class POSTerminal{
         System.arraycopy(amountBytes, 0, data, 0, 2);
         System.arraycopy(terminalCounter, 0, data, 2, 2);
 
-        byte[] signature = new byte[128];
+        byte[] transactionSignature = new byte[128];
         try {
-            signature = utils.sign(data, terminalPrivKey);
+            transactionSignature = utils.sign(data, terminalPrivKey);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();
         }
 
-        // Send amount (2 bytes) || terminalCounter (2 bytes) || signature (128 bytes)
+        // Send amount (2 bytes) || terminalCounter (2 bytes) || transactionSignature (128 bytes)
         byte[] dataToSend = new byte[132];
         System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
         System.arraycopy(terminalCounter, 0, dataToSend, 2, 2);
-        System.arraycopy(signature, 0, dataToSend, 4, 128);
+        System.arraycopy(transactionSignature, 0, dataToSend, 4, 128);
 
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, dataToSend);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
@@ -296,15 +296,7 @@ public class POSTerminal{
                 System.out.println("(POSTerminal) Sufficient funds: TRANSACTION SUCCESSFUL");
 
                 // Write transactionSignature || signatureResponse to file under logs folder with timestamp
-                String fileName = "logs/transaction_" + LocalDateTime.now().toString() + ".txt";
-                try {
-                    FileWriter fileWriter = new FileWriter(fileName);
-                    fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(signature) + "\n");
-                    fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(signatureResponse) + "\n");
-                    fileWriter.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                utils.writeTransactionToLog(transactionSignature, signatureResponse);
             }
             
         } catch (Exception e) {

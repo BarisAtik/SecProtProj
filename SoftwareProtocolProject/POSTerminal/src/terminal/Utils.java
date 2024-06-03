@@ -11,8 +11,11 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigInteger;
 
 import javax.smartcardio.*;
@@ -125,5 +128,17 @@ public class Utils {
         counterValue++;
         ByteBuffer.wrap(counter).putShort(counterValue);
         return counter;
+    }
+
+    public void writeTransactionToLog(byte[] transactionSignature, byte[] responseSignature){
+        String fileName = "logs/transaction_" + LocalDateTime.now().toString() + ".txt";
+        try {
+            FileWriter fileWriter = new FileWriter(fileName);
+            fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(signature) + "\n");
+            fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(signatureResponse) + "\n");
+            fileWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
  }
