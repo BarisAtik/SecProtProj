@@ -76,7 +76,7 @@ public class POSTerminal{
     CardChannel applet;
 
     public POSTerminal(int terminalID, RSAPublicKey masterPubKey) {
-        terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x25}; 
+        terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         terminalCert = new byte[128];
          
         this.terminalID = terminalID;
@@ -240,9 +240,35 @@ public class POSTerminal{
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
-            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00);
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 0x16, (byte) 0x00, (byte) 0x00);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
+    }
+
+    public void performTransaction(JavaxSmartCardInterface simulator, int amount){
+        // Create signature amount || terminalCounter
+        byte[] amountBytes = utils.intToBytes2(amount);
+        byte[] data = new byte[6];
+        System.arraycopy(amountBytes, 0, data, 0, 2);
+        System.arraycopy(terminalCounter, 0, data, 2, 4);
+
+        byte[] signature = new byte[128];
+        try {
+            signature = utils.sign(data, terminalPrivKey);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+        }
+
+        // Send amount (2 bytes) || terminalCounter (4 bytes) || signature (128 bytes)
+        byte[] dataToSend = new byte[134];
+        System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
+        System.arraycopy(terminalCounter, 0, dataToSend, 2, 4);
+        System.arraycopy(signature, 0, dataToSend, 6, 128);
+
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, dataToSend);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+
 
     }
 }

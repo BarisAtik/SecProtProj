@@ -24,6 +24,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected byte[] transientData;
     protected byte[] terminalNonce;
     protected byte[] cardNonce;
+    protected byte[] amount;
 
     // Persistent variables
     protected byte[] balance; 
@@ -41,13 +42,15 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
 
     // Helper objects
     private final CardAuth cardAuth;
+    private final Payment payment;
     private final Init init;
     final Signature signatureInstance;
     final RandomData randomDataInstance;
 
     EPurse() {
         cardId = new byte[4];
-        balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
+        balance = new byte[]{0x01, (byte) 0xF4};
+        //balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         cardCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         expireDateUnix = new byte[]{0x00, 0x00, 0x00, 0x00};
         cardCertificate = new byte[128];
@@ -65,8 +68,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
         terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);
         terminalNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT);
+        amount = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
         
         cardAuth = new CardAuth(this);
+        payment = new Payment(this);
         init = new Init(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
@@ -113,7 +118,13 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
                 System.out.println("(EPurse) Verifying response...");
                 cardAuth.verifyResponse(apdu);
                 break;
+            case 7:
+                System.out.println("(EPurse) Substracting money...");
+                payment.substractMoney(apdu);
+                break;
             case 16:
+                System.out.println("(EPurse) End Of Life...");
+                
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
                 // byte[] helloWorldBytes = "Hello World is the best line".getBytes();

@@ -83,6 +83,12 @@ public class Utils {
         return bb.array();
     }
 
+    public byte[] intToBytes2(int i){
+        ByteBuffer bb = ByteBuffer.allocate(2);
+        bb.putShort((short) i);
+        return bb.array();
+    }
+
     public int bytesToInt(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         return bb.getInt();

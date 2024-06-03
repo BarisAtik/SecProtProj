@@ -62,6 +62,7 @@ public class Terminal {
         byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
         POSterminal.setTerminalCertificate(terminalCert);
         POSterminal.authenticateCard(simulator);
+        POSterminal.performTransaction(simulator, 50);
 
     }
     
