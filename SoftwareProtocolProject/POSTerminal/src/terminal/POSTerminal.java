@@ -294,6 +294,17 @@ public class POSTerminal{
                 System.out.println("(POSTerminal) Insufficient funds: ABORTING TRANSACTION");
             } else {
                 System.out.println("(POSTerminal) Sufficient funds: TRANSACTION SUCCESSFUL");
+
+                // Write transactionSignature || signatureResponse to file under logs folder with timestamp
+                String fileName = "logs/transaction_" + LocalDateTime.now().toString() + ".txt";
+                try {
+                    FileWriter fileWriter = new FileWriter(fileName);
+                    fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(signature) + "\n");
+                    fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(signatureResponse) + "\n");
+                    fileWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             
         } catch (Exception e) {
