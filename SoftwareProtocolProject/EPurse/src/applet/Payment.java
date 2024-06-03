@@ -68,7 +68,7 @@ public class Payment {
         Util.arrayCopy(purse.terminalCounter, (short) 0, purse.transientData, (short) 1, (short) 2);
 
         // DEBUG Print remaining balance
-        //System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
+        System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
         //System.out.println("Counter value: " + Util.getShort(purse.terminalCounter, (short) 0));
 
         // Create signature for M (1 byte) || terminalCounter++ (2 bytes) with card private key

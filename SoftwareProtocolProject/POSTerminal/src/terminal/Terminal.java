@@ -17,6 +17,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 
 import java.util.Random;
+import java.util.Scanner;
 
 import javax.smartcardio.*;
 import javacard.framework.AID;
@@ -61,8 +62,42 @@ public class Terminal {
         POSterminal.setTerminalKeyPair();
         byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
         POSterminal.setTerminalCertificate(terminalCert);
-        POSterminal.authenticateCard(simulator);
-        POSterminal.performTransaction(simulator, 50);
+
+        // Scanner object to read input from user
+        // 0) Pay at a POSterminal
+        // 1) Reload card
+        // 2) Check balance
+        
+        boolean demo = true;
+        while(demo){
+            Scanner scanner = new Scanner(System.in);
+            System.out.println("Choose an option: ");
+            System.out.println("0) Pay at a POSterminal");
+            System.out.println("1) Reload card");
+            System.out.println("2) Check balance");
+            int option = scanner.nextInt();
+            switch(option){
+                case 0:
+                    POSterminal.authenticateCard(simulator);
+                    // Ask for amount
+                    System.out.println("Enter amount: ");
+                    int amount = scanner.nextInt();
+                    POSterminal.performTransaction(simulator, amount);
+                    break;
+                case 1:
+                    //POSterminal.reloadCard(simulator);
+                    break;
+                case 2:
+                    //POSterminal.checkBalance(simulator);
+                    break;
+                default:
+                    System.out.println("Invalid option");
+                    demo = false;
+                    break;
+            }
+        }
+        //POSterminal.authenticateCard(simulator);
+        //POSterminal.performTransaction(simulator, 50);
 
     }
     
