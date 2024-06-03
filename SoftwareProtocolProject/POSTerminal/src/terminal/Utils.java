@@ -134,8 +134,8 @@ public class Utils {
         String fileName = "logs/transaction_" + LocalDateTime.now().toString() + ".txt";
         try {
             FileWriter fileWriter = new FileWriter(fileName);
-            fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(signature) + "\n");
-            fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(signatureResponse) + "\n");
+            fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(transactionSignature) + "\n");
+            fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(responseSignature) + "\n");
             fileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
