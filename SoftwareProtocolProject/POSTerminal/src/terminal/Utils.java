@@ -83,7 +83,12 @@ public class Utils {
         return bb.array();
     }
 
-    public byte[] intToBytes2(int i){
+    public int shortBytesToInt(byte[] bytes) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        return bb.getShort();
+    }
+
+    public byte[] intToShortBytes(int i){
         ByteBuffer bb = ByteBuffer.allocate(2);
         bb.putShort((short) i);
         return bb.array();
@@ -114,7 +119,11 @@ public class Utils {
         return verifier.verify(signature);
     }
 
-    public byte [] incrementByteArray(byte [] array) {
-        return intToBytes(bytesToInt(array) + 1);
+    // Function to increment byte[2] counter using ByteBuffer
+    public byte[] incrementCounter(byte[] counter){
+        short counterValue = ByteBuffer.wrap(counter).getShort();
+        counterValue++;
+        ByteBuffer.wrap(counter).putShort(counterValue);
+        return counter;
     }
-}
+ }

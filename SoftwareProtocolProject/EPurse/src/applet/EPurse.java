@@ -21,6 +21,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected byte[] terminalSignature;
     protected byte[] terminalModulus;
     protected byte[] terminalExponent;
+    protected byte[] terminalCounter;
     protected byte[] transientData;
     protected byte[] terminalNonce;
     protected byte[] cardNonce;
@@ -68,6 +69,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
         terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);
         terminalNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT);
+        terminalCounter = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
         amount = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
         
         cardAuth = new CardAuth(this);

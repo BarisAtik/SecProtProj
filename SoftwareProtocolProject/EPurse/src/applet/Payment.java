@@ -34,14 +34,14 @@ public class Payment {
         // Read the data into the buffer
         apdu.setIncomingAndReceive();
 
-        // Receive amount (4 bytes)|| terminalCounter (4 bytes)|| Signature (128 bytes)
+        // Receive amount (2 bytes)|| terminalCounter (2 bytes)|| Signature (128 bytes)
         Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
 
         // Check amount (4 bytes) ||  terminalCounter (4 bytes) with the signature 
         // Verify signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 6, purse.transientData, (short) 6, (short) 128);
-        System.out.println("transaction Signature verified: " + verified);
+        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 4, purse.transientData, (short) 4, (short) 128);
+        System.out.println("(EPURSE) transaction Signature verified: " + verified);
 
         if(!verified){
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -49,19 +49,47 @@ public class Payment {
 
         // Copy amount to purse.amount
         Util.arrayCopy(purse.transientData, (short) 0, purse.amount, (short) 0, (short) 2);
+        Util.arrayCopy(purse.transientData, (short) 2, purse.terminalCounter, (short) 0, (short) 2);   
 
         if (!sufficientFunds()) {
             System.out.println("Insufficient funds: ABORTING TRANSACTION");
-            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-        } 
+            // Overwrite first byte of transientData with M = 0 indicating insufficient funds
+            purse.transientData[0] = 0;
+        } else {
+            // Update balance
+            updateBalance();
+            // Overwrite first byte of transientData with M = 1 indicating sufficient funds
+            purse.transientData[0] = 1;
+        }
 
-        // Update balance
-        updateBalance();
-        
+        // Increment terminalCounter (2 bytes)
+        purse.terminalCounter = incrementCounter(purse.terminalCounter);
+        // Put terminalCounter after M in transientData
+        Util.arrayCopy(purse.terminalCounter, (short) 0, purse.transientData, (short) 1, (short) 2);
+
         // DEBUG Print remaining balance
-        System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
+        //System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
+        //System.out.println("Counter value: " + Util.getShort(purse.terminalCounter, (short) 0));
 
+        // Create signature for M (1 byte) || terminalCounter++ (2 bytes) with card private key
+        purse.signatureInstance.init(purse.cardPrivKey, Signature.MODE_SIGN);
+        short signatureLength = purse.signatureInstance.sign(purse.transientData, (short) 0, (short) 3, purse.transientData, (short) 3);
+
+        // Send M || Signature
+        Util.arrayCopy(purse.transientData, (short) 0, buffer, (short) 0, (short) 1);
+        Util.arrayCopy(purse.transientData, (short) 3, buffer, (short) 1, signatureLength);
         
+        // Send response
+        apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
+    }
+
+
+    // Increment byte[] counter using Util.getShort and Util.setShort
+    public byte[] incrementCounter(byte[] counter){
+        short counterValue = Util.getShort(counter, (short) 0);
+        counterValue++;
+        Util.setShort(counter, (short) 0, counterValue);
+        return counter;
     }
 
     public boolean sufficientFunds() {

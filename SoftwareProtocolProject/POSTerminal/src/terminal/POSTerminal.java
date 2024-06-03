@@ -76,7 +76,7 @@ public class POSTerminal{
     CardChannel applet;
 
     public POSTerminal(int terminalID, RSAPublicKey masterPubKey) {
-        terminalCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
+        terminalCounter = new byte[]{0x00, 0x00}; 
         terminalCert = new byte[128];
          
         this.terminalID = terminalID;
@@ -247,10 +247,10 @@ public class POSTerminal{
 
     public void performTransaction(JavaxSmartCardInterface simulator, int amount){
         // Create signature amount || terminalCounter
-        byte[] amountBytes = utils.intToBytes2(amount);
-        byte[] data = new byte[6];
+        byte[] amountBytes = utils.intToShortBytes(amount);
+        byte[] data = new byte[4];
         System.arraycopy(amountBytes, 0, data, 0, 2);
-        System.arraycopy(terminalCounter, 0, data, 2, 4);
+        System.arraycopy(terminalCounter, 0, data, 2, 2);
 
         byte[] signature = new byte[128];
         try {
@@ -260,15 +260,45 @@ public class POSTerminal{
             e.printStackTrace();
         }
 
-        // Send amount (2 bytes) || terminalCounter (4 bytes) || signature (128 bytes)
-        byte[] dataToSend = new byte[134];
+        // Send amount (2 bytes) || terminalCounter (2 bytes) || signature (128 bytes)
+        byte[] dataToSend = new byte[132];
         System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
-        System.arraycopy(terminalCounter, 0, dataToSend, 2, 4);
-        System.arraycopy(signature, 0, dataToSend, 6, 128);
+        System.arraycopy(terminalCounter, 0, dataToSend, 2, 2);
+        System.arraycopy(signature, 0, dataToSend, 4, 128);
 
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, dataToSend);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
 
+        // Increment terminalCounter 
+        terminalCounter = utils.incrementCounter(terminalCounter);
 
+        // Get response from card:  M (1 byte) || signature (128 bytes)
+        byte[] responseData = response.getData();
+        byte M = responseData[0];
+        byte[] signatureResponse = new byte[128];
+        System.arraycopy(responseData, 1, signatureResponse, 0, 128);
+
+        // Verify the signature using own terminalCounter incrementented by 1
+        byte[] dataToVerify = new byte[3];
+        System.arraycopy(responseData, 0, dataToVerify, 0, 1);
+        System.arraycopy(terminalCounter, 0, dataToVerify, 1, 2);
+       
+        // Debug print terminalCounterResponse
+        System.out.println("(POSTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
+
+        try {
+            boolean verified = utils.verify(dataToVerify, signatureResponse, cardPubKey);
+            System.out.println("(POSTerminal) Transaction Signature verified: " + verified);
+
+            if(M == 0){
+                System.out.println("(POSTerminal) Insufficient funds: ABORTING TRANSACTION");
+            } else {
+                System.out.println("(POSTerminal) Sufficient funds: TRANSACTION SUCCESSFUL");
+            }
+            
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
     }
 }
