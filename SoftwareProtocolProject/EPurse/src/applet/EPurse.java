@@ -124,6 +124,14 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
                 System.out.println("(EPurse) Substracting money...");
                 payment.substractMoney(apdu);
                 break;
+            case 8:
+                System.out.println("(EPurse) Adding money...");
+                //payment.addMoney(apdu);
+                break;
+            case 9:
+                System.out.println("(EPurse) Checking balance...");
+                payment.sendBalance(apdu);
+                break;
             case 16:
                 System.out.println("(EPurse) End Of Life...");
                 

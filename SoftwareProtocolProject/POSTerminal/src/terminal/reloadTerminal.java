@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Scanner;
 import java.util.Base64;
+// import filereader object
 import java.io.*;
 
 import javax.smartcardio.Card;
@@ -31,7 +32,6 @@ import com.licel.jcardsim.smartcardio.JCardSimProvider;
 import com.licel.jcardsim.smartcardio.CardTerminalSimulator;
 import com.licel.jcardsim.smartcardio.CardSimulator;
 
-import java.security.SecureRandom;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
@@ -41,6 +41,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 
@@ -48,8 +49,7 @@ import java.math.BigInteger;
 
 import applet.EPurse;
 
-
-public class POSTerminal{
+public class reloadTerminal{
     private SecureRandom secureRandom;
     private byte[] terminalCounter;
     public int terminalID;
@@ -73,10 +73,9 @@ public class POSTerminal{
     
     CardChannel applet;
 
-    public POSTerminal(int terminalID, RSAPublicKey masterPubKey) {
+    public reloadTerminal(int terminalID, RSAPublicKey masterPubKey) {
         terminalCounter = new byte[]{0x00, 0x00}; 
         terminalCert = new byte[128];
-         
         this.terminalID = terminalID;
         this.masterPubKey = masterPubKey;
 
@@ -171,7 +170,7 @@ public class POSTerminal{
 
         try {
             boolean verified = utils.verify(dataToVerify, cardCertificate, masterPubKey);
-            System.out.println("(POSTerminal) Certificate verified: " + verified);
+            System.out.println("(reloadTerminal) Certificate verified: " + verified);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   
@@ -183,7 +182,7 @@ public class POSTerminal{
         byte[] cardNonceSignature = new byte[128];
         try {
             cardNonceSignature = utils.sign(cardNonce, terminalPrivKey);
-            // System.out.println("(POSTerminal) cardNonceSignature size: " + cardNonceSignature.length); 
+            // System.out.println("(reloadTerminal) cardNonceSignature size: " + cardNonceSignature.length); 
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();
@@ -200,7 +199,7 @@ public class POSTerminal{
         // Verify the signature        
         try {
             boolean verified = utils.verify(terminalNonce, cardSignedNonce, cardPubKey);
-            System.out.println("(POSTerminal) Terminal Nonce Signature verified: " + verified);
+            System.out.println("(reloadTerminal) Terminal Nonce Signature verified: " + verified);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   
@@ -213,9 +212,9 @@ public class POSTerminal{
         System.arraycopy(cardExpireDate, 0, expireDate, 0, 4);
 
         if(utils.isPastDate(expireDate, currentDate)){
-            System.out.println("(POSTerminal) Card is expired!");
+            System.out.println("(reloadTerminal) Card is expired!");
         } else {
-            System.out.println("(POSTerminal) Card is not expired!");
+            System.out.println("(reloadTerminal) Card is not expired!");
         }
 
         // If card is expired, send command to block the card
@@ -225,65 +224,9 @@ public class POSTerminal{
         }
     }
 
-    public void performTransaction(JavaxSmartCardInterface simulator, int amount){
-        //-----------------------------SEND TRANSACTION DATA---------------------------------------------------
-        // Create signature amount || terminalCounter
-        byte[] amountBytes = utils.intToShortBytes(amount);
-        byte[] data = new byte[4];
-        System.arraycopy(amountBytes, 0, data, 0, 2);
-        System.arraycopy(terminalCounter, 0, data, 2, 2);
+    public void performReload(JavaxSmartCardInterface simulator, int amount){
 
-        byte[] transactionSignature = new byte[128];
-        try {
-            transactionSignature = utils.sign(data, terminalPrivKey);
-        } catch (Exception e) {
-            // Handle the exception here
-            e.printStackTrace();
-        }
-
-        // Send amount (2 bytes) || terminalCounter (2 bytes) || transactionSignature (128 bytes)
-        byte[] dataToSend = new byte[132];
-        System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
-        System.arraycopy(terminalCounter, 0, dataToSend, 2, 2);
-        System.arraycopy(transactionSignature, 0, dataToSend, 4, 128);
-
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x07, (byte) 0x00, (byte) 0x00, dataToSend);
-        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
-
-        // Increment terminalCounter 
-        terminalCounter = utils.incrementCounter(terminalCounter);
-        
-        //-----------------------------RECEIVE TRANSACTION RESPONSE---------------------------------------------------
-        // Get response from card:  M (1 byte) || signature (128 bytes)
-        byte[] responseData = response.getData();
-        byte M = responseData[0];
-        byte[] signatureResponse = new byte[128];
-        System.arraycopy(responseData, 1, signatureResponse, 0, 128);
-
-        // Verify the signature using own terminalCounter incrementented by 1
-        byte[] dataToVerify = new byte[3];
-        System.arraycopy(responseData, 0, dataToVerify, 0, 1);
-        System.arraycopy(terminalCounter, 0, dataToVerify, 1, 2);
-       
-        // Debug print terminalCounterResponse
-        System.out.println("(POSTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
-
-        try {
-            boolean verified = utils.verify(dataToVerify, signatureResponse, cardPubKey);
-            System.out.println("(POSTerminal) Transaction Signature verified: " + verified);
-
-            if(M == 0){
-                System.out.println("(POSTerminal) Insufficient funds: ABORTING TRANSACTION");
-            } else {
-                System.out.println("(POSTerminal) Sufficient funds: TRANSACTION SUCCESSFUL");
-
-                // Write transactionSignature || signatureResponse to file under logs folder with timestamp
-                utils.writeTransactionToLog(transactionSignature, signatureResponse);
-            }
-            
-        } catch (Exception e) {
-            // Handle the exception here
-            e.printStackTrace();   
-        }
     }
+
+
 }

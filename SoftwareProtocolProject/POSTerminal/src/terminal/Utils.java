@@ -52,7 +52,14 @@ public class Utils {
     public void sendCommandToApplet(JavaxSmartCardInterface simulator, int command){
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) command, (byte) 0x00, (byte) 0x00);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
-        System.out.println("Response: " + toHexString(response.getBytes()));
+        //System.out.println("Response: " + toHexString(response.getBytes()));
+    }
+
+    public int getBalance(JavaxSmartCardInterface simulator){
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x09, (byte) 0x00, (byte) 0x00);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+        byte[] responseData = response.getData();
+        return shortBytesToInt(responseData);
     }
 
     public String toHexString(byte[] bytes) {

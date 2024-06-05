@@ -57,7 +57,7 @@ public class Payment {
             purse.transientData[0] = 0;
         } else {
             // Update balance
-            updateBalance();
+            decreaseBalance();
             // Overwrite first byte of transientData with M = 1 indicating sufficient funds
             purse.transientData[0] = 1;
         }
@@ -68,7 +68,7 @@ public class Payment {
         Util.arrayCopy(purse.terminalCounter, (short) 0, purse.transientData, (short) 1, (short) 2);
 
         // DEBUG Print remaining balance
-        System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
+        //System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
         //System.out.println("Counter value: " + Util.getShort(purse.terminalCounter, (short) 0));
 
         // Create signature for M (1 byte) || terminalCounter++ (2 bytes) with card private key
@@ -83,6 +83,19 @@ public class Payment {
         apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
     }
 
+    public void sendBalance(APDU apdu){
+        byte[] buffer = apdu.getBuffer();
+        Util.arrayCopy(purse.balance, (short) 0, buffer, (short) 0, (short) 2);
+        apdu.setOutgoingAndSend((short) 0, (short) 2);
+    }
+
+    public void increaseBalance() {
+        Util.setShort(purse.balance, (short) 0, (short) (Util.getShort(purse.balance, (short) 0) + Util.getShort(purse.amount, (short) 0)));
+    }
+
+    public void decreaseBalance() {
+        Util.setShort(purse.balance, (short) 0, (short) (Util.getShort(purse.balance, (short) 0) - Util.getShort(purse.amount, (short) 0)));
+    }
 
     // Increment byte[] counter using Util.getShort and Util.setShort
     public byte[] incrementCounter(byte[] counter){
@@ -95,10 +108,6 @@ public class Payment {
     public boolean sufficientFunds() {
         return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0);
     }   
-
-    public void updateBalance() {
-        Util.setShort(purse.balance, (short) 0, (short) (Util.getShort(purse.balance, (short) 0) - Util.getShort(purse.amount, (short) 0)));
-    }
 
     // DEBUG REMOVE THIS
     public int bytesToInt(byte[] bytes) {

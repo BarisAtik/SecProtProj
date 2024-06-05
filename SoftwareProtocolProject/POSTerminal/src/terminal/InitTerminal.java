@@ -103,6 +103,10 @@ public class InitTerminal {
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
     }
 
+    public int getBalance(JavaxSmartCardInterface simulator){
+        return utils.getBalance(simulator);
+    }
+
     public void sendMasterPublicKey(JavaxSmartCardInterface simulator, RSAPublicKey masterPublicKey){
         
         //System.out.println("Master Public Key on Init Terminal: " +  masterPublicKey.toString());

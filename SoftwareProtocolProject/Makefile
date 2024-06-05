@@ -14,7 +14,7 @@ JCARDSIM=jcardsim-3.0.4-SNAPSHOT
 # way more than is probably needed
 JC_CLASSPATH=${JC_HOME}/lib/apdutool.jar:${JC_HOME}/lib/apduio.jar:${JC_HOME}/lib/converter.jar:${JC_HOME}/lib/jcwde.jar:${JC_HOME}/lib/scriptgen.jar:${JC_HOME}/lib/offcardverifier.jar:${JC_HOME}/lib/api.jar:${JC_HOME}/lib/installer.jar:${JC_HOME}/lib/capdump.jar:${JC_HOME}/samples/classes:${CLASSPATH}
 
-all: applet terminal initTerminal mainTerminal
+all: applet terminal initTerminal mainTerminal reloadTerminal
 
 applet: EPurse/bin/EPurse.class 
 
@@ -30,6 +30,8 @@ mainTerminal: POSTerminal/bin/terminal/Terminal.class
 
 initTerminal: POSTerminal/bin/terminal/InitTerminal.class
 
+reloadTerminal: POSTerminal/bin/terminal/reloadTerminal.class
+
 POSTerminal/bin/terminal/POSTerminal.class: POSTerminal/src/terminal/POSTerminal.java
 	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java 
 
@@ -38,6 +40,9 @@ POSTerminal/bin/terminal/InitTerminal.class: POSTerminal/src/terminal/InitTermin
 
 POSTerminal/bin/terminal/Terminal.class: POSTerminal/src/terminal/Terminal.java
 	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/Terminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java
+
+POSTerminal/bin/terminal/reloadTerminal.class: POSTerminal/src/terminal/reloadTerminal.java
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/reloadTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java
 
 runterminal: 
 	# Runs the GUI terminal

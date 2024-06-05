@@ -33,6 +33,7 @@ import applet.EPurse;
 import terminal.InitTerminal;
 import terminal.Utils;
 import terminal.POSTerminal;
+import terminal.reloadTerminal;
 
 public class Terminal {
 
@@ -63,6 +64,11 @@ public class Terminal {
         byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
         POSterminal.setTerminalCertificate(terminalCert);
 
+        reloadTerminal reloadTerminal = new reloadTerminal(023, backend.masterPublicKey);
+        reloadTerminal.setTerminalKeyPair();
+        byte[] reloadTerminalCert = backend.createTerminalCertificate(reloadTerminal.terminalID, reloadTerminal.terminalPubKey, backend.masterPrivateKey);
+        reloadTerminal.setTerminalCertificate(reloadTerminalCert);
+
         // Scanner object to read input from user
         // 0) Pay at a POSterminal
         // 1) Reload card
@@ -73,7 +79,7 @@ public class Terminal {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Choose an option: ");
             System.out.println("0) Pay at a POSterminal");
-            System.out.println("1) Reload card");
+            System.out.println("1) Reload card at a reload terminal");
             System.out.println("2) Check balance");
             int option = scanner.nextInt();
             switch(option){
@@ -85,10 +91,19 @@ public class Terminal {
                     POSterminal.performTransaction(simulator, amount);
                     break;
                 case 1:
-                    //POSterminal.reloadCard(simulator);
+                    reloadTerminal.authenticateCard(simulator);
+                    int balance = backend.getBalance(simulator);
+                    int maximumReloadAmount = 500 - balance;
+                    System.out.println("Enter amount to reload (max: " + maximumReloadAmount + "): ");
+                    int reloadAmount = scanner.nextInt();
+                    if(reloadAmount > maximumReloadAmount || reloadAmount < 0){
+                        System.out.println("Invalid amount");
+                        break;
+                    }
+                    reloadTerminal.performReload(simulator, reloadAmount);
                     break;
-                case 2:
-                    //POSterminal.checkBalance(simulator);
+                case 2: 
+                    System.out.println("Balance on the card: " + backend.getBalance(simulator));
                     break;
                 default:
                     System.out.println("Invalid option");
