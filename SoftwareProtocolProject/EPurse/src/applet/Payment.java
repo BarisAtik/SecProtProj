@@ -27,6 +27,11 @@ public class Payment {
     }
 
     public void addMoney(APDU apdu){
+        // Check if state is authenticated
+        if(purse.state[0] != 0x03){
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
+
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
@@ -73,6 +78,11 @@ public class Payment {
     }
 
     public void substractMoney(APDU apdu){
+        // Check if state is authenticated
+        if(purse.state[0] != 0x03){
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
+
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 

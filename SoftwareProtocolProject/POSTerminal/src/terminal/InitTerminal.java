@@ -150,7 +150,7 @@ public class InitTerminal {
     public void createCertificate(JavaxSmartCardInterface simulator, RSAPrivateKey masterPrivateKey){
 
         // create certificate
-        // cardID (4 bytes)|| expireDate (4 bytes) || cardModulus (128 bytes)
+        // cardID (4 bytes)|| expireDate (4 bytes) || cardExp (3 bytes) || cardModulus (128 bytes)
         byte[] data = new byte[139];
         System.arraycopy(cardID, 0, data, 0, 4);
         System.arraycopy(cardExpireDate, 0, data, 4, 4);
@@ -174,7 +174,7 @@ public class InitTerminal {
             e.printStackTrace();   
         }
 
-        // DEBUG: Verify the certificate with master public key
+        //DEBUG: Verify the certificate with master public key
         // try {
         //     boolean verified = utils.verify(data, certificate, masterPublicKey);
         //     System.out.println("(InitTerminal) Certificate verified: " + verified);

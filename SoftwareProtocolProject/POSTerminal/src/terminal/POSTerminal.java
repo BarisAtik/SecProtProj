@@ -150,7 +150,7 @@ public class POSTerminal{
 
         // Make the public key of the card from the cardMod and the cardExp using setExponent and setModulus
        try {
-            cardPubKey = utils.getPublicKey(cardExp, cardMod);
+            cardPubKey = utils.getPublicKey(terminalExponent, cardMod);
        } catch (Exception e) {
             e.printStackTrace();
        }

@@ -19,8 +19,15 @@ public class CardAuth {
     public CardAuth(EPurse purse) {
         this.purse = purse;
     }
-
+    
+    // Depends: STATE = initialized
+    // After: STATE = DATA_EXCHANGED
     public void exchangeData(APDU apdu){
+        // Check if state is initialized
+        // if (!purse.initialized) {
+        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        // }
+
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
@@ -59,9 +66,19 @@ public class CardAuth {
         apdu.setOutgoingLength((short) purse.transientData.length);
         apdu.sendBytesLong(purse.transientData, (short) 0, (short) purse.transientData.length);
 
+        // Set state to DATA_EXCHANGED
+        purse.state[0] = 0x01;
+
     }
 
+    // Depends: STATE = DATA_EXCHANGED
     public void exchangeCertificate(APDU apdu){
+        // Check if state is DATA_EXCHANGED
+        // if (purse.state[0] != 0x01) {
+        //     System.out.println("State is not DATA_EXCHANGED");
+        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        // }
+
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
@@ -89,9 +106,20 @@ public class CardAuth {
         apdu.setOutgoing();
         apdu.setOutgoingLength((short) purse.cardCertificate.length);
         apdu.sendBytesLong(purse.cardCertificate, (short) 0, (short) purse.cardCertificate.length);
+    
+        // Set the state to CERTIFICATE_EXCHANGED
+        purse.state[0] = 0x02;
     }
 
+    // Depends: STATE = STATE_CERTIFICATE_EXCHANGED
+    // After: STATE = STATE_AUTHENTICATED
     public void verifyResponse(APDU apdu){
+        // Check if state is CERTIFICATE_EXCHANGED
+        // if (purse.state[0] != 0x02) {
+        //     System.out.println("State is not CERTIFICATE_EXCHANGED");
+        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        // }
+
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
@@ -116,5 +144,7 @@ public class CardAuth {
         apdu.setOutgoingLength(signatureLength);
         apdu.sendBytesLong(purse.transientData, (short) 0, signatureLength);
 
+        // Set the state to AUTHENTICATED
+        purse.state[0] = 0x03;
     }
 }

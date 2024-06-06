@@ -19,7 +19,7 @@ all: applet terminal initTerminal mainTerminal reloadTerminal
 applet: EPurse/bin/EPurse.class 
 
 EPurse/bin/EPurse.class: EPurse/src/applet/EPurse.java
-	javac -d EPurse/bin -cp ${JC_CLASSPATH}:POSTerminal/src EPurse/src/applet/CardAuth.java EPurse/src/applet/Payment.java EPurse/src/applet/Init.java EPurse/src/applet/EPurse.java EPurse/src/applet/Constants.java
+	javac -d EPurse/bin -cp ${JC_CLASSPATH}:POSTerminal/src EPurse/src/applet/CardAuth.java EPurse/src/applet/Payment.java EPurse/src/applet/Init.java EPurse/src/applet/EPurse.java EPurse/src/applet/Constants.java EPurse/src/applet/Block.java
 
 POSTerminal/bin/terminal/QuickTest.class: POSTerminal/src/terminal/QuickTest.java
 	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin POSTerminal/src/terminal/QuickTest.java

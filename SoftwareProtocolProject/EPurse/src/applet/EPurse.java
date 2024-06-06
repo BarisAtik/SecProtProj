@@ -45,6 +45,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     private final CardAuth cardAuth;
     private final Payment payment;
     private final Init init;
+    private final Block block;
     final Signature signatureInstance;
     final RandomData randomDataInstance;
 
@@ -75,6 +76,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         cardAuth = new CardAuth(this);
         payment = new Payment(this);
         init = new Init(this);
+        block = new Block(this);
 
         signatureInstance = Signature.getInstance(Signature.ALG_RSA_SHA_PKCS1, false);
         randomDataInstance = RandomData.getInstance(RandomData.ALG_SECURE_RANDOM);
@@ -94,6 +96,13 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         if (selectingApplet()) {
             return;
         }
+
+        // Check if the card is blocked
+        // if (blocked) {
+        //     System.out.println("(EPurse) Card is blocked");
+        //     ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
+        //     System.err.println("Card is blocked");
+        // }
 
         switch (ins) {
             case 1:
@@ -134,12 +143,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
                 break;
             case 16:
                 System.out.println("(EPurse) End Of Life...");
-                
+                block.block(apdu);
+                break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
-                // byte[] helloWorldBytes = "Hello World is the best line".getBytes();
-                // System.arraycopy(helloWorldBytes, 0, buffer, 0, helloWorldBytes.length);
-                // apdu.setOutgoingAndSend((short) 0, (short) helloWorldBytes.length);
                 break;
         }
 
