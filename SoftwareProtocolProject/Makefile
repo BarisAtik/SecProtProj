@@ -39,7 +39,7 @@ POSTerminal/bin/terminal/InitTerminal.class: POSTerminal/src/terminal/InitTermin
 	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java
 
 POSTerminal/bin/terminal/Terminal.class: POSTerminal/src/terminal/Terminal.java
-	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/Terminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/Terminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/reloadTerminal.java
 
 POSTerminal/bin/terminal/reloadTerminal.class: POSTerminal/src/terminal/reloadTerminal.java
 	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/reloadTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java

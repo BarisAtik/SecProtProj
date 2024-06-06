@@ -225,8 +225,64 @@ public class reloadTerminal{
     }
 
     public void performReload(JavaxSmartCardInterface simulator, int amount){
+        //-----------------------------SEND TRANSACTION DATA---------------------------------------------------
+        // Create signature amount || terminalCounter
+        byte[] amountBytes = utils.intToShortBytes(amount);
+        byte[] data = new byte[4];
+        System.arraycopy(amountBytes, 0, data, 0, 2);
+        System.arraycopy(terminalCounter, 0, data, 2, 2);
 
+        byte[] transactionSignature = new byte[128];
+        try {
+            transactionSignature = utils.sign(data, terminalPrivKey);
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();
+        }
+
+        // Send amount (2 bytes) || terminalCounter (2 bytes) || transactionSignature (128 bytes)
+        byte[] dataToSend = new byte[132];
+        System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
+        System.arraycopy(terminalCounter, 0, dataToSend, 2, 2);
+        System.arraycopy(transactionSignature, 0, dataToSend, 4, 128);
+
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x08, (byte) 0x00, (byte) 0x00, dataToSend);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+
+        // Increment terminalCounter 
+        terminalCounter = utils.incrementCounter(terminalCounter);
+
+        //-----------------------------RECEIVE TRANSACTION RESPONSE---------------------------------------------------
+        // Get response from card:  M (1 byte) || signature (128 bytes)
+        byte[] responseData = response.getData();
+        byte M = responseData[0];
+        byte[] signatureResponse = new byte[128];
+        System.arraycopy(responseData, 1, signatureResponse, 0, 128);
+
+        // Verify the signature using own terminalCounter incrementented by 1
+        byte[] dataToVerify = new byte[3];
+        System.arraycopy(responseData, 0, dataToVerify, 0, 1);
+        System.arraycopy(terminalCounter, 0, dataToVerify, 1, 2);
+       
+        // Debug print terminalCounterResponse
+        System.out.println("(reloadTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
+
+        try {
+            boolean verified = utils.verify(dataToVerify, signatureResponse, cardPubKey);
+            System.out.println("(reloadTerminal) Transaction Signature verified: " + verified);
+
+            if(M == 0){
+                System.out.println("(reloadTerminal) RELOAD FAILED: ABORTING TRANSACTION");
+            } else {
+                System.out.println("(reloadTerminal) RELOAD SUCCESSFUL: TRANSACTION COMPLETED");
+
+                // Write transactionSignature || signatureResponse to file under logs folder with timestamp
+                utils.writeTransactionToLog(transactionSignature, signatureResponse);
+            }
+            
+        } catch (Exception e) {
+            // Handle the exception here
+            e.printStackTrace();   
+        }
     }
-
-
 }

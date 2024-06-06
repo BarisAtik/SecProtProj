@@ -26,11 +26,56 @@ public class Payment {
         this.purse = purse;
     }
 
+    public void addMoney(APDU apdu){
+        byte[] buffer = apdu.getBuffer();
+        short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
+
+        // Read the data into the buffer
+        apdu.setIncomingAndReceive();
+
+        // Receive amount (2 bytes)|| terminalCounter (2 bytes)|| Signature (128 bytes)
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, dataLength);
+
+        // Check amount (4 bytes) ||  terminalCounter (4 bytes) with the signature 
+        // Verify signature
+        purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
+        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 4, purse.transientData, (short) 4, (short) 128);
+        System.out.println("(EPURSE) transaction Signature verified: " + verified);
+
+        if(!verified){
+            ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
+        }
+
+        // Copy amount to purse.amount
+        Util.arrayCopy(purse.transientData, (short) 0, purse.amount, (short) 0, (short) 2);
+        Util.arrayCopy(purse.transientData, (short) 2, purse.terminalCounter, (short) 0, (short) 2);
+
+        // Update balance
+        increaseBalance();
+        purse.transientData[0] = 1;
+
+        // Increment terminalCounter (2 bytes)
+        purse.terminalCounter = incrementCounter(purse.terminalCounter);
+        // Put terminalCounter after M in transientData
+        Util.arrayCopy(purse.terminalCounter, (short) 0, purse.transientData, (short) 1, (short) 2);
+
+        // Create signature for M (1 byte) || terminalCounter++ (2 bytes) with card private key
+        purse.signatureInstance.init(purse.cardPrivKey, Signature.MODE_SIGN);
+        short signatureLength = purse.signatureInstance.sign(purse.transientData, (short) 0, (short) 3, purse.transientData, (short) 3);
+
+        // Send M || Signature
+        Util.arrayCopy(purse.transientData, (short) 0, buffer, (short) 0, (short) 1);
+        Util.arrayCopy(purse.transientData, (short) 3, buffer, (short) 1, signatureLength);
+        
+        // Send response
+        apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
+
+    }
+
     public void substractMoney(APDU apdu){
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
 
-        //######## START ARROW TWO ########
         // Read the data into the buffer
         apdu.setIncomingAndReceive();
 
@@ -110,8 +155,8 @@ public class Payment {
     }   
 
     // DEBUG REMOVE THIS
-    public int bytesToInt(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        return bb.getInt();
-    }
+    // public int bytesToInt(byte[] bytes) {
+    //     ByteBuffer bb = ByteBuffer.wrap(bytes);
+    //     return bb.getInt();
+    // }
 }

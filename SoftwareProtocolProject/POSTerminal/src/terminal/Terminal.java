@@ -100,6 +100,7 @@ public class Terminal {
                         System.out.println("Invalid amount");
                         break;
                     }
+                    main.talkToBank(scanner);   
                     reloadTerminal.performReload(simulator, reloadAmount);
                     break;
                 case 2: 
@@ -111,9 +112,19 @@ public class Terminal {
                     break;
             }
         }
-        //POSterminal.authenticateCard(simulator);
-        //POSterminal.performTransaction(simulator, 50);
+    }
 
+    public void talkToBank(Scanner scanner){
+        String[] bank = {"ING", "ABN", "Rabobank"};
+        System.out.println("Choose a bank: ");
+        for(int i = 0; i < bank.length; i++){
+            System.out.println(i + ") " + bank[i]);
+        }
+        int bankChoice = scanner.nextInt();
+        System.out.println("Talkin to " + bank[bankChoice]);   
+        System.out.println("Enter PIN");
+        int pin = scanner.nextInt();
+        System.out.println("Bank response: OK");
     }
     
 }
