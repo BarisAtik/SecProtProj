@@ -23,10 +23,11 @@ public class CardAuth {
     // Depends: STATE = initialized
     // After: STATE = DATA_EXCHANGED
     public void exchangeData(APDU apdu){
-        // Check if state is initialized
-        // if (!purse.initialized) {
-        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-        // }
+        //Check if state is initialized
+        if (!purse.initialized) {
+            System.err.println("(EPurse) State is not initialized");
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
@@ -73,11 +74,11 @@ public class CardAuth {
 
     // Depends: STATE = DATA_EXCHANGED
     public void exchangeCertificate(APDU apdu){
-        // Check if state is DATA_EXCHANGED
-        // if (purse.state[0] != 0x01) {
-        //     System.out.println("State is not DATA_EXCHANGED");
-        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-        // }
+        //Check if state is DATA_EXCHANGED
+        if (purse.state[0] != 0x01) {
+            System.err.println("(EPurse) State is not DATA_EXCHANGED");
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
@@ -115,10 +116,10 @@ public class CardAuth {
     // After: STATE = STATE_AUTHENTICATED
     public void verifyResponse(APDU apdu){
         // Check if state is CERTIFICATE_EXCHANGED
-        // if (purse.state[0] != 0x02) {
-        //     System.out.println("State is not CERTIFICATE_EXCHANGED");
-        //     ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
-        // }
+        if (purse.state[0] != 0x02) {
+            System.err.println("(EPurse) State is not CERTIFICATE_EXCHANGED");
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
         byte[] buffer = apdu.getBuffer();
         short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);

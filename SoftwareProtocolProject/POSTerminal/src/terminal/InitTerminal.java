@@ -93,7 +93,7 @@ public class InitTerminal {
         cardExpireDate = utils.intToBytes(expireDate);
 
         // TEST: Give card a past expire date
-        // cardExpireDate = utils.intToBytes(157680000);        
+        //cardExpireDate = utils.intToBytes(157680000);        
 
         // Set the card ID and expire date
         System.arraycopy(cardID, 0, data, 0, 4);

@@ -219,7 +219,7 @@ public class reloadTerminal{
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
-            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 0x16, (byte) 0x00, (byte) 0x00);
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
     }

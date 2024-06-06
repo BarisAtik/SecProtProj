@@ -29,6 +29,7 @@ public class Payment {
     public void addMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){
+            System.err.println("(EPurse) State is not authenticated");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -80,6 +81,7 @@ public class Payment {
     public void substractMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){
+            System.err.println("(EPurse) State is not AUTHENTICATED");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 

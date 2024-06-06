@@ -85,23 +85,33 @@ public class Terminal {
             switch(option){
                 case 0:
                     POSterminal.authenticateCard(simulator);
-                    // Ask for amount
-                    System.out.println("Enter amount: ");
-                    int amount = scanner.nextInt();
-                    POSterminal.performTransaction(simulator, amount);
-                    break;
+                    if(!main.cardBlocked(simulator)){
+                        System.out.println("Enter amount: ");
+                        int amount = scanner.nextInt();
+                        POSterminal.performTransaction(simulator, amount);
+                    } else {
+                        System.err.println("Card is blocked");
+                        demo = false;
+                    }
+                    
+                    break; 
                 case 1:
                     reloadTerminal.authenticateCard(simulator);
-                    int balance = backend.getBalance(simulator);
-                    int maximumReloadAmount = 500 - balance;
-                    System.out.println("Enter amount to reload (max: " + maximumReloadAmount + "): ");
-                    int reloadAmount = scanner.nextInt();
-                    if(reloadAmount > maximumReloadAmount || reloadAmount < 0){
-                        System.out.println("Invalid amount");
-                        break;
+                    if(!main.cardBlocked(simulator)){
+                        int balance = backend.getBalance(simulator);
+                        int maximumReloadAmount = 500 - balance;
+                        System.out.println("Enter amount to reload (max: " + maximumReloadAmount + "): ");
+                        int reloadAmount = scanner.nextInt();
+                        if(!(reloadAmount > maximumReloadAmount || reloadAmount < 0)){
+                            main.talkToBank(scanner);   
+                            reloadTerminal.performReload(simulator, reloadAmount);
+                        } else {
+                            System.out.println("Invalid amount");
+                        }
+                    } else {
+                        System.err.println("Card is blocked");
+                        demo = false;
                     }
-                    main.talkToBank(scanner);   
-                    reloadTerminal.performReload(simulator, reloadAmount);
                     break;
                 case 2: 
                     System.out.println("Balance on the card: " + backend.getBalance(simulator));
@@ -125,6 +135,17 @@ public class Terminal {
         System.out.println("Enter PIN");
         int pin = scanner.nextInt();
         System.out.println("Bank response: OK");
+    }
+
+    public boolean cardBlocked(JavaxSmartCardInterface simulator){
+        // Try silly command to see if card is blocked
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 17, (byte) 0x00, (byte) 0x00);
+        ResponseAPDU response = simulator.transmitCommand(commandAPDU);
+        // Check if boolean is true
+        if(response.getData()[0] == 1){
+            return true;
+        }
+        return false;
     }
     
 }

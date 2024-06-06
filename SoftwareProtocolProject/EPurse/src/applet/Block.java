@@ -23,10 +23,23 @@ public class Block {
         this.purse = purse;
     }
 
-
     // TODO: check signature of terminal before blocking
     public void block(APDU apdu){
         // Set EPurse to blocked
+        System.out.println("(EPurse) Blocking EPurse");
         purse.blocked = true;
+    }
+
+    public void sendBlockedStatus(APDU apdu){
+        // Send blocked status
+        byte[] buffer = apdu.getBuffer();
+        short dataLength = (short) (buffer[ISO7816.OFFSET_LC] & 0x00FF);
+
+        // Read the data into the buffer
+        apdu.setIncomingAndReceive();
+
+        // Send blocked boolean
+        buffer[0] = purse.blocked ? (byte) 0x01 : (byte) 0x00;
+        apdu.setOutgoingAndSend((short) 0, (short) 1);
     }
 }

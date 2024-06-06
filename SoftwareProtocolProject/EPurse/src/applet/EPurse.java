@@ -1,11 +1,15 @@
 package applet;
 
 import javacard.framework.*;
+
+import javax.print.attribute.standard.MediaSize.ISO;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
 import java.applet.Applet;
 import java.nio.ByteBuffer;
+import java.time.chrono.IsoEra;
+
 import javacard.security.Signature;
 import javacard.security.RandomData;
 
@@ -38,6 +42,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected javacard.security.RSAPublicKey masterPubKey;
     protected javacard.security.RSAPublicKey terminalPubKey;
     protected boolean blocked;
+    protected byte[] blocked_status;
     protected boolean initialized;
     
 
@@ -98,11 +103,11 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         }
 
         // Check if the card is blocked
-        // if (blocked) {
-        //     System.out.println("(EPurse) Card is blocked");
-        //     ISOException.throwIt(ISO7816.SW_COMMAND_NOT_ALLOWED);
-        //     System.err.println("Card is blocked");
-        // }
+        if (blocked) {
+            System.out.println("(EPurse) Card is blocked");
+            ins = 17;
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
         switch (ins) {
             case 1:
@@ -144,6 +149,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
             case 16:
                 System.out.println("(EPurse) End Of Life...");
                 block.block(apdu);
+                break;
+            case 17:
+                //System.out.println("(EPurse) Sending blocked status...");
+                block.sendBlockedStatus(apdu);
                 break;
             default:
                 ISOException.throwIt(ISO7816.SW_INS_NOT_SUPPORTED);
