@@ -163,7 +163,8 @@ public class Payment {
     }
 
     public boolean sufficientFunds() {
-        return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0);
+        return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0) && Util.getShort(purse.amount, (short) 0) >= 0 ;
+        //Describe in the paper, why negative numbers caused a problem...!!!
     }   
 
     // DEBUG REMOVE THIS

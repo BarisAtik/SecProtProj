@@ -93,7 +93,6 @@ public class Terminal {
                         System.err.println("Card is blocked");
                         demo = false;
                     }
-                    
                     break; 
                 case 1:
                     reloadTerminal.authenticateCard(simulator);
