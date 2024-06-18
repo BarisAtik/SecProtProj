@@ -219,9 +219,20 @@ public class reloadTerminal{
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
-            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00);
+            // sign cardId 
+            byte[] signature = new byte[128];
+            try {
+                signature = utils.sign(cardID, terminalPrivKey);
+            } catch (Exception e) {
+                // Handle the exception here
+                e.printStackTrace();
+            }
+            // Send signature to card
+            System.out.println("(POSTerminal) Sending blocking command to card");
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00, signature);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
+        
     }
 
     public void performReload(JavaxSmartCardInterface simulator, int amount){
