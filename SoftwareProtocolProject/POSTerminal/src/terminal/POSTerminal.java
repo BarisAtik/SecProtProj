@@ -220,13 +220,17 @@ public class POSTerminal{
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
-            // Increase cardSignedNonce by 1
-            cardSignedNonce = utils.incrementCounter(cardSignedNonce);
-            // Sign cardSignedNonce || expireDate
-            byte[] dataToSign = new byte[8];
-            System.arraycopy(cardSignedNonce, 0, dataToSign, 0, 4);
-            
-            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00);
+            // sign cardId 
+            byte[] signature = new byte[128];
+            try {
+                signature = utils.sign(cardID, terminalPrivKey);
+            } catch (Exception e) {
+                // Handle the exception here
+                e.printStackTrace();
+            }
+            // Send signature to card
+            System.out.println("(POSTerminal) Sending blocking command to card");
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00, signature);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
     }
@@ -271,9 +275,6 @@ public class POSTerminal{
         System.arraycopy(responseData, 0, dataToVerify, 0, 1);
         System.arraycopy(terminalCounter, 0, dataToVerify, 1, 2);
        
-        // Debug print terminalCounterResponse
-        System.out.println("(POSTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
-
         try {
             boolean verified = utils.verify(dataToVerify, signatureResponse, cardPubKey);
             System.out.println("(POSTerminal) Transaction Signature verified: " + verified);

@@ -155,7 +155,7 @@ public class Payment {
     }
 
     // Increment byte[] counter using Util.getShort and Util.setShort
-    public byte[] incrementCounter(byte[] counter){
+    private byte[] incrementCounter(byte[] counter){
         short counterValue = Util.getShort(counter, (short) 0);
         counterValue++;
         Util.setShort(counter, (short) 0, counterValue);

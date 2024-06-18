@@ -93,6 +93,11 @@ public class Utils {
         return bb.array();
     }
 
+    public int bytesToInt(byte[] bytes) {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+        return bb.getInt();
+    }
+
     public int shortBytesToInt(byte[] bytes) {
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         return bb.getShort();
@@ -104,9 +109,20 @@ public class Utils {
         return bb.array();
     }
 
-    public int bytesToInt(byte[] bytes) {
-        ByteBuffer bb = ByteBuffer.wrap(bytes);
-        return bb.getInt();
+    public byte[] incrementByteArray(byte[] array){
+        ByteBuffer bb = ByteBuffer.wrap(array);
+        int value = bb.getInt();
+        value++;
+        bb.putInt(value);
+        return bb.array();
+    }
+
+    // Function to increment byte[2] counter using ByteBuffer
+    public byte[] incrementCounter(byte[] counter){
+        short counterValue = ByteBuffer.wrap(counter).getShort();
+        counterValue++;
+        ByteBuffer.wrap(counter).putShort(counterValue);
+        return counter;
     }
 
     public RSAPublicKey getPublicKey(byte[] exponent, byte[] modulus) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -127,14 +143,6 @@ public class Utils {
         verifier.initVerify(key);
         verifier.update(content);
         return verifier.verify(signature);
-    }
-
-    // Function to increment byte[2] counter using ByteBuffer
-    public byte[] incrementCounter(byte[] counter){
-        short counterValue = ByteBuffer.wrap(counter).getShort();
-        counterValue++;
-        ByteBuffer.wrap(counter).putShort(counterValue);
-        return counter;
     }
 
     public void writeTransactionToLog(byte[] transactionSignature, byte[] responseSignature){
