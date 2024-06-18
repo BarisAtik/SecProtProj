@@ -220,6 +220,12 @@ public class POSTerminal{
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
+            // Increase cardSignedNonce by 1
+            cardSignedNonce = utils.incrementCounter(cardSignedNonce);
+            // Sign cardSignedNonce || expireDate
+            byte[] dataToSign = new byte[8];
+            System.arraycopy(cardSignedNonce, 0, dataToSign, 0, 4);
+            
             CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
