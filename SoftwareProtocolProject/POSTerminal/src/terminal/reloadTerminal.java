@@ -232,7 +232,7 @@ public class reloadTerminal{
             CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00, signature);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
-        
+
     }
 
     public void performReload(JavaxSmartCardInterface simulator, int amount){

@@ -86,8 +86,9 @@ public class Terminal {
                 case 0:
                     POSterminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
-                        System.out.println("Enter amount: ");
+                        System.out.println("Enter amount in eurocents: ");
                         int amount = scanner.nextInt();
+                        System.out.println("Amount: " + main.amountToString(amount) + " EUR");
                         POSterminal.performTransaction(simulator, amount);
                     } else {
                         System.err.println("Card is blocked");
@@ -98,8 +99,8 @@ public class Terminal {
                     reloadTerminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
                         int balance = backend.getBalance(simulator);
-                        int maximumReloadAmount = 500 - balance;
-                        System.out.println("Enter amount to reload (max: " + maximumReloadAmount + "): ");
+                        int maximumReloadAmount = 30000 - balance;
+                        System.out.println("Enter amount to reload in eurocents (max: " + main.amountToString(maximumReloadAmount) + "): ");
                         int reloadAmount = scanner.nextInt();
                         if(!(reloadAmount > maximumReloadAmount || reloadAmount < 0)){
                             main.talkToBank(scanner);   
@@ -113,7 +114,7 @@ public class Terminal {
                     }
                     break;
                 case 2: 
-                    System.out.println("Balance on the card: " + backend.getBalance(simulator));
+                    System.out.println("Balance on the card: " + main.amountToString(backend.getBalance(simulator)) + " EUR");
                     break;
                 default:
                     System.out.println("Invalid option");
@@ -134,6 +135,18 @@ public class Terminal {
         System.out.println("Enter PIN");
         int pin = scanner.nextInt();
         System.out.println("Bank response: OK");
+    }
+
+    private String amountToString(int amount){
+        String amountString = Integer.toString(amount);
+        if(amountString.length() == 1){
+            amountString = "0,0" + amountString;
+        } else if(amountString.length() == 2){
+            amountString = "0," + amountString;
+        } else {
+            amountString = amountString.substring(0, amountString.length() - 2) + "," + amountString.substring(amountString.length() - 2);
+        }
+        return amountString;
     }
 
     public boolean cardBlocked(JavaxSmartCardInterface simulator){

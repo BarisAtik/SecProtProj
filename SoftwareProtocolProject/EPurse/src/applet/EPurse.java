@@ -56,8 +56,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
 
     EPurse() {
         cardId = new byte[4];
-        balance = new byte[]{0x01, (byte) 0xF4};
-        //balance = new byte[]{0x00, 0x00, 0x00, 0x00}; 
+        //balance = new byte[]{0x01, (byte) 0xF4};
+        balance = new byte[2];
         cardCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         expireDateUnix = new byte[]{0x00, 0x00, 0x00, 0x00};
         cardCertificate = new byte[128];
