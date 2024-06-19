@@ -11,11 +11,6 @@ import javacard.security.Signature;
 import javacard.security.RandomData;
 
 public class EPurse extends javacard.framework.Applet implements ISO7816 {
-    // Constants (TO DO: Move to Constants.java)
-    final static short ID_SIZE = 4;
-    final static short COUNTER_SIZE = 4;
-    final static short SIGNATURE_SIZE = 128;//256;
-
     // Transient variables
     protected byte[] state;
     protected byte[] terminalId;
@@ -66,8 +61,8 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         cardNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT); 
         
         // Terminal variables
-        terminalId = JCSystem.makeTransientByteArray((short) ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
-        terminalSignature = JCSystem.makeTransientByteArray((short) SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalId = JCSystem.makeTransientByteArray((short) Constants.ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalSignature = JCSystem.makeTransientByteArray((short) Constants.SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
         terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);
         terminalNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT);
