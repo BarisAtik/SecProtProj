@@ -8,16 +8,11 @@ import javax.print.attribute.standard.MediaSize.ISO;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
-import java.applet.Applet;
-import java.nio.ByteBuffer;
 
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPublicKey;
 import javacard.security.Signature;
 import javacard.framework.ISO7816;
-
-// DEBUG REMOVE THIS
-import java.nio.ByteBuffer;
 
 public class Payment {
     private final EPurse purse;
@@ -29,7 +24,6 @@ public class Payment {
     public void addMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){
-            System.err.println("(EPurse) State is not authenticated");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -46,7 +40,6 @@ public class Payment {
         // Verify signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
         boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 4, purse.transientData, (short) 4, (short) 128);
-        System.out.println("(EPURSE) transaction Signature verified: " + verified);
 
         if(!verified){
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -81,7 +74,6 @@ public class Payment {
     public void substractMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){
-            System.err.println("(EPurse) State is not AUTHENTICATED");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -98,7 +90,6 @@ public class Payment {
         // Verify signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
         boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 4, purse.transientData, (short) 4, (short) 128);
-        System.out.println("(EPURSE) transaction Signature verified: " + verified);
 
         if(!verified){
             ISOException.throwIt(ISO7816.SW_SECURITY_STATUS_NOT_SATISFIED);
@@ -109,7 +100,6 @@ public class Payment {
         Util.arrayCopy(purse.transientData, (short) 2, purse.terminalCounter, (short) 0, (short) 2);   
 
         if (!sufficientFunds()) {
-            System.out.println("Insufficient funds: ABORTING TRANSACTION");
             // Overwrite first byte of transientData with M = 0 indicating insufficient funds
             purse.transientData[0] = 0;
         } else {
@@ -123,10 +113,6 @@ public class Payment {
         purse.terminalCounter = incrementCounter(purse.terminalCounter);
         // Put terminalCounter after M in transientData
         Util.arrayCopy(purse.terminalCounter, (short) 0, purse.transientData, (short) 1, (short) 2);
-
-        // DEBUG Print remaining balance
-        //System.out.println("Remaining balance: " + Util.getShort(purse.balance, (short) 0));
-        //System.out.println("Counter value: " + Util.getShort(purse.terminalCounter, (short) 0));
 
         // Create signature for M (1 byte) || terminalCounter++ (2 bytes) with card private key
         purse.signatureInstance.init(purse.cardPrivKey, Signature.MODE_SIGN);
@@ -154,8 +140,7 @@ public class Payment {
         Util.setShort(purse.balance, (short) 0, (short) (Util.getShort(purse.balance, (short) 0) - Util.getShort(purse.amount, (short) 0)));
     }
 
-    // Increment byte[] counter using Util.getShort and Util.setShort
-    private byte[] incrementCounter(byte[] counter){
+    public byte[] incrementCounter(byte[] counter){
         short counterValue = Util.getShort(counter, (short) 0);
         counterValue++;
         Util.setShort(counter, (short) 0, counterValue);
@@ -166,10 +151,4 @@ public class Payment {
         return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0) && Util.getShort(purse.amount, (short) 0) >= 0 ;
         //Describe in the paper, why negative numbers caused a problem...!!!
     }   
-
-    // DEBUG REMOVE THIS
-    // public int bytesToInt(byte[] bytes) {
-    //     ByteBuffer bb = ByteBuffer.wrap(bytes);
-    //     return bb.getInt();
-    // }
 }

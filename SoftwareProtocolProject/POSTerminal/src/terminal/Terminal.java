@@ -69,11 +69,7 @@ public class Terminal {
         byte[] reloadTerminalCert = backend.createTerminalCertificate(reloadTerminal.terminalID, reloadTerminal.terminalPubKey, backend.masterPrivateKey);
         reloadTerminal.setTerminalCertificate(reloadTerminalCert);
 
-        // Scanner object to read input from user
-        // 0) Pay at a POSterminal
-        // 1) Reload card
-        // 2) Check balance
-        
+        // DEMO
         boolean demo = true;
         while(demo){
             Scanner scanner = new Scanner(System.in);

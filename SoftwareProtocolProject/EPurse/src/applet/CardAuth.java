@@ -6,7 +6,6 @@ import javacard.framework.Util;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
-import java.applet.Applet;
 
 import javacard.security.KeyBuilder;
 import javacard.security.RSAPublicKey;
@@ -25,7 +24,6 @@ public class CardAuth {
     public void exchangeData(APDU apdu){
         //Check if state is initialized
         if (!purse.initialized) {
-            System.err.println("(EPurse) State is not initialized");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -49,9 +47,7 @@ public class CardAuth {
         
         // Generate random nonce
         purse.randomDataInstance.generateData(purse.cardNonce, (short) 0, (short) Constants.NONCE_SIZE);
-        // DEBUG print cardNonce
-        //System.out.println("Card nonce: " + purse.cardNonce.toString());
-
+        
         // Send cardID || cardNonce || cardExpireDate || cardExp || cardMod
         // Put data in transientData
         Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) Constants.ID_size);
@@ -69,14 +65,12 @@ public class CardAuth {
 
         // Set state to DATA_EXCHANGED
         purse.state[0] = 0x01;
-
     }
 
     // Depends: STATE = DATA_EXCHANGED
     public void exchangeCertificate(APDU apdu){
         //Check if state is DATA_EXCHANGED
         if (purse.state[0] != 0x01) {
-            System.err.println("(EPurse) State is not DATA_EXCHANGED");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -96,10 +90,8 @@ public class CardAuth {
         // Verify the signature
         purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
         boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 135, purse.terminalSignature, (short) 0, (short) 128);
-        //System.out.println("(EPurse) Signature verified: " + verified);
 
         if (!verified) {
-            System.out.println("Signature does not match!");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -117,7 +109,6 @@ public class CardAuth {
     public void verifyResponse(APDU apdu){
         // Check if state is CERTIFICATE_EXCHANGED
         if (purse.state[0] != 0x02) {
-            System.err.println("(EPurse) State is not CERTIFICATE_EXCHANGED");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
@@ -130,10 +121,8 @@ public class CardAuth {
         // Verify the signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
         boolean verified = purse.signatureInstance.verify(purse.cardNonce, (short) 0, (short) 4, purse.transientData, (short) 0, (short) 128);
-        System.out.println("(EPurse) Card Nonce Signature verified: " + verified);
         
         if (!verified) {
-            System.out.println("Nonce Signature does not match!");
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 

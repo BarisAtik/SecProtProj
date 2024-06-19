@@ -6,9 +6,6 @@ import javax.print.attribute.standard.MediaSize.ISO;
 import javax.smartcardio.CardChannel;
 import javax.smartcardio.CardException;
 import javax.smartcardio.CommandAPDU;
-import java.applet.Applet;
-import java.nio.ByteBuffer;
-import java.time.chrono.IsoEra;
 
 import javacard.security.Signature;
 import javacard.security.RandomData;
@@ -45,7 +42,6 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     protected byte[] blocked_status;
     protected boolean initialized;
     
-
     // Helper objects
     private final CardAuth cardAuth;
     private final Payment payment;
@@ -95,7 +91,6 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     public void process(APDU apdu) throws ISOException, APDUException { 
         byte[] buffer = apdu.getBuffer();
         byte ins = buffer[OFFSET_INS];
-        System.out.println("(EPurse) INS: " + ins);
 
         // Ignore the APDU that selects this applet
         if (selectingApplet()) {
@@ -104,54 +99,42 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
 
         // Check if the card is blocked
         if (blocked) {
-            System.out.println("(EPurse) Card is blocked");
             ins = 17;
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
 
         switch (ins) {
             case 1:
-                System.out.println("(EPurse) Setting card ID and expire date...");
                 init.setCardIdAndExpireDate(apdu);
                 break;
             case 2:
-                System.out.println("(EPurse) Generating keypairs...");
                 init.generateKeypairs(apdu);
                 break;
             case 3:
-                System.out.println("(EPurse) Setting certificate...");
                 init.setCertificate(apdu);
                 break;
             case 4:
-                System.out.println("(EPurse) Exchanging data...");
                 cardAuth.exchangeData(apdu);
                 break;
             case 5:
-                System.out.println("(EPurse) Verifying certificate...");
                 cardAuth.exchangeCertificate(apdu);
                 break;
             case 6: 
-                System.out.println("(EPurse) Verifying response...");
                 cardAuth.verifyResponse(apdu);
                 break;
             case 7:
-                System.out.println("(EPurse) Substracting money...");
                 payment.substractMoney(apdu);
                 break;
             case 8:
-                System.out.println("(EPurse) Adding money...");
                 payment.addMoney(apdu);
                 break;
             case 9:
-                System.out.println("(EPurse) Checking balance...");
                 payment.sendBalance(apdu);
                 break;
             case 16:
-                System.out.println("(EPurse) End Of Life...");
                 block.block(apdu);
                 break;
             case 17:
-                //System.out.println("(EPurse) Sending blocked status...");
                 block.sendBlockedStatus(apdu);
                 break;
             default:
