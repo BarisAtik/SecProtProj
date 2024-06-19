@@ -61,7 +61,7 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         cardNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT); 
         
         // Terminal variables
-        terminalId = JCSystem.makeTransientByteArray((short) Constants.ID_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalId = JCSystem.makeTransientByteArray((short) Constants.ID_size, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) Constants.SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
         terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
         terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);

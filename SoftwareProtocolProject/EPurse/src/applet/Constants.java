@@ -6,7 +6,6 @@ public class Constants {
     public final static short BALANCE_SIZE = 2;
     public final static short COUNTER_SIZE = BALANCE_SIZE;
 
-
     public final static short NONCE_SIZE = 4; 
     public final static short EXPONENT_SIZE = 3;
     public final static short SIGNATURE_SIZE = 128;
@@ -16,6 +15,4 @@ public class Constants {
     public final static byte STATE_DATA_EXCHANGED = 0x01;
     public final static byte STATE_CERTIFICATE_EXCHANGED = 0x02;
     public final static byte STATE_AUTHENTICATED = 0x03;
-
-
 }
