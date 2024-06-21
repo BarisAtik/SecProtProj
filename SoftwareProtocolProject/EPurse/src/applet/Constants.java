@@ -10,6 +10,7 @@ public class Constants {
     public final static short EXPONENT_SIZE = 3;
     public final static short SIGNATURE_SIZE = 128;
     public final static short KEY_SIZE = 128;
+    public final static short CERTIFICATE_SIZE = ID_size + EXPIREDATE_size + EXPONENT_SIZE + SIGNATURE_SIZE;
 
     // Card states
     public final static byte STATE_DATA_EXCHANGED = 0x01;

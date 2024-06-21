@@ -46,28 +46,27 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
     final RandomData randomDataInstance;
 
     EPurse() {
-        cardId = new byte[4];
-        //balance = new byte[]{0x01, (byte) 0xF4};
-        balance = new byte[2];
+        cardId = new byte[Constants.ID_size];
+        balance = new byte[Constants.BALANCE_SIZE];
         cardCounter = new byte[]{0x00, 0x00, 0x00, 0x00}; 
         expireDateUnix = new byte[]{0x00, 0x00, 0x00, 0x00};
-        cardCertificate = new byte[128];
+        cardCertificate = new byte[Constants.SIGNATURE_SIZE];
         blocked = false;
         initialized = false;
 
         // Card variables
         state = JCSystem.makeTransientByteArray((short) 1, JCSystem.CLEAR_ON_DESELECT);
         transientData = JCSystem.makeTransientByteArray((short) 255, JCSystem.CLEAR_ON_RESET);
-        cardNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT); 
+        cardNonce = JCSystem.makeTransientByteArray((short) Constants.NONCE_SIZE, JCSystem.CLEAR_ON_DESELECT); 
         
         // Terminal variables
         terminalId = JCSystem.makeTransientByteArray((short) Constants.ID_size, JCSystem.CLEAR_ON_DESELECT);
         terminalSignature = JCSystem.makeTransientByteArray((short) Constants.SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
-        terminalModulus = JCSystem.makeTransientByteArray((short) 128, JCSystem.CLEAR_ON_DESELECT);
-        terminalExponent = JCSystem.makeTransientByteArray((short) 3, JCSystem.CLEAR_ON_DESELECT);
-        terminalNonce = JCSystem.makeTransientByteArray((short) 4, JCSystem.CLEAR_ON_DESELECT);
-        terminalCounter = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
-        amount = JCSystem.makeTransientByteArray((short) 2, JCSystem.CLEAR_ON_DESELECT);
+        terminalModulus = JCSystem.makeTransientByteArray((short) Constants.SIGNATURE_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalExponent = JCSystem.makeTransientByteArray((short) Constants.EXPONENT_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalNonce = JCSystem.makeTransientByteArray((short) Constants.NONCE_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        terminalCounter = JCSystem.makeTransientByteArray((short) Constants.COUNTER_SIZE, JCSystem.CLEAR_ON_DESELECT);
+        amount = JCSystem.makeTransientByteArray((short) Constants.BALANCE_SIZE, JCSystem.CLEAR_ON_DESELECT);
         
         cardAuth = new CardAuth(this);
         payment = new Payment(this);

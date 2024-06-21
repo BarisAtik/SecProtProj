@@ -42,8 +42,8 @@ public class CardAuth {
         Util.arrayCopy(purse.transientData, (short) (Constants.ID_size + Constants.NONCE_SIZE + Constants.EXPONENT_SIZE), purse.terminalModulus, (short) 0, (short) Constants.KEY_SIZE);
 
         purse.terminalPubKey = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
-        purse.terminalPubKey.setExponent(purse.terminalExponent, (short) 0, (short) 3);
-        purse.terminalPubKey.setModulus(purse.terminalModulus, (short) 0, (short) 128);
+        purse.terminalPubKey.setExponent(purse.terminalExponent, (short) 0, (short) Constants.EXPONENT_SIZE);
+        purse.terminalPubKey.setModulus(purse.terminalModulus, (short) 0, (short) Constants.KEY_SIZE);
         
         // Generate random nonce
         purse.randomDataInstance.generateData(purse.cardNonce, (short) 0, (short) Constants.NONCE_SIZE);
@@ -120,7 +120,7 @@ public class CardAuth {
                 
         // Verify the signature
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.cardNonce, (short) 0, (short) 4, purse.transientData, (short) 0, (short) 128);
+        boolean verified = purse.signatureInstance.verify(purse.cardNonce, (short) 0, (short) Constants.NONCE_SIZE, purse.transientData, (short) 0, (short) Constants.SIGNATURE_SIZE);
         
         if (!verified) {
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
@@ -128,7 +128,7 @@ public class CardAuth {
 
         // Send sign(terminalNonce , cardPrivKey) back
         purse.signatureInstance.init(purse.cardPrivKey, Signature.MODE_SIGN);
-        short signatureLength = purse.signatureInstance.sign(purse.terminalNonce, (short) 0, (short) 4, purse.transientData, (short) 0);
+        short signatureLength = purse.signatureInstance.sign(purse.terminalNonce, (short) 0, (short) Constants.NONCE_SIZE, purse.transientData, (short) 0);
 
         apdu.setOutgoing();
         apdu.setOutgoingLength(signatureLength);

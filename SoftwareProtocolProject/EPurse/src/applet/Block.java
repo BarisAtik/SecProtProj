@@ -30,11 +30,11 @@ public class Block {
         apdu.setIncomingAndReceive();
 
         // Copy to transient data
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) 128);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) Constants.SIGNATURE_SIZE);
 
         // Verify signature with cardID
         purse.signatureInstance.init(purse.terminalPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.cardId, (short) 0, (short) 4, purse.transientData, (short) 0, (short) 128);
+        boolean verified = purse.signatureInstance.verify(purse.cardId, (short) 0, (short) Constants.ID_size, purse.transientData, (short) 0, (short) Constants.SIGNATURE_SIZE);
         
         // Set EPurse to blocked
         if(verified){

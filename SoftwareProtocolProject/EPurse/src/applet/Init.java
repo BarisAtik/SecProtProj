@@ -23,8 +23,8 @@ public class Init {
         byte[] buffer = apdu.getBuffer();
         apdu.setIncomingAndReceive();
     
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardId, (short) 0, (short) 4);
-        Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + 4), purse.expireDateUnix, (short) 0, (short) 4);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardId, (short) 0, (short) Constants.ID_size);
+        Util.arrayCopy(buffer, (short) (ISO7816.OFFSET_CDATA + Constants.ID_size), purse.expireDateUnix, (short) 0, (short) Constants.EXPIREDATE_size);
     }
 
     public void generateKeypairs(APDU apdu){
@@ -35,8 +35,8 @@ public class Init {
 
         // set exponent and modulus
         purse.masterPubKey = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
-        purse.masterPubKey.setExponent(purse.transientData, (short) 0, (short) 3);
-        purse.masterPubKey.setModulus(purse.transientData, (short) 3, (short) 128);
+        purse.masterPubKey.setExponent(purse.transientData, (short) 0, (short) Constants.EXPONENT_SIZE);
+        purse.masterPubKey.setModulus(purse.transientData, (short) Constants.EXPONENT_SIZE, (short) Constants.KEY_SIZE);
 
         // Step 5 - Init protocol
         KeyPair keyPair = new KeyPair(KeyPair.ALG_RSA, KeyBuilder.LENGTH_RSA_1024);
@@ -46,28 +46,28 @@ public class Init {
 
         // Put exp and modulus in buffer
         purse.cardPubKey.getExponent(buffer, (short) 0);
-        purse.cardPubKey.getModulus(buffer, (short) 3);
+        purse.cardPubKey.getModulus(buffer, (short) Constants.EXPONENT_SIZE);
 
         // Send public key to back-end to get it signed
-        apdu.setOutgoingAndSend((short) 0, (short) 131);
+        apdu.setOutgoingAndSend((short) 0, (short) (Constants.EXPONENT_SIZE + Constants.KEY_SIZE));
     }
 
     public void setCertificate(APDU apdu){
         byte[] buffer = apdu.getBuffer();
         apdu.setIncomingAndReceive();
 
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardCertificate, (short) 0, (short) 128);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardCertificate, (short) 0, (short) Constants.SIGNATURE_SIZE);
 
         // copy purse.cardId + purse.expireDateUnix + purse.cardCertificate to transientData
-        Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) 4);
-        Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) 4, (short) 4);
+        Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) Constants.ID_size);
+        Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) Constants.ID_size, (short) Constants.EXPIREDATE_size);
         
-        purse.cardPubKey.getExponent(purse.transientData, (short) 8);
-        purse.cardPubKey.getModulus(purse.transientData, (short) 11);
+        purse.cardPubKey.getExponent(purse.transientData, (short) (Constants.ID_size + Constants.EXPIREDATE_size));
+        purse.cardPubKey.getModulus(purse.transientData, (short) (Constants.ID_size + Constants.EXPIREDATE_size + Constants.EXPONENT_SIZE));
 
         // Verify the certificate with master public key
         purse.signatureInstance.init(purse.masterPubKey, Signature.MODE_VERIFY);
-        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 139, purse.cardCertificate, (short) 0, (short) 128);
+        boolean verified = purse.signatureInstance.verify(purse.transientData, (short) 0, (short) 139, purse.cardCertificate, (short) 0, (short) Constants.SIGNATURE_SIZE);
 
         // Set state to initialized
         if (verified) {
