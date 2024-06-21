@@ -152,12 +152,24 @@ public class Utils {
             fileWriter.write("Transaction Date: " + LocalDateTime.now().toString() + "\n");
             fileWriter.write("Card ID: " + bytesToInt(cardID) + "\n");
             fileWriter.write("Terminal ID: " + terminalID + "\n");
-            fileWriter.write("Amount: " + amount + "\n");
+            fileWriter.write("Amount: " + amountToString(amount) + "eurocents" +"\n");
             fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(transactionSignature) + "\n");
             fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(responseSignature) + "\n");
             fileWriter.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String amountToString(int amount){
+        String amountString = Integer.toString(amount);
+        if(amountString.length() == 1){
+            amountString = "0,0" + amountString;
+        } else if(amountString.length() == 2){
+            amountString = "0," + amountString;
+        } else {
+            amountString = amountString.substring(0, amountString.length() - 2) + "," + amountString.substring(amountString.length() - 2);
+        }
+        return amountString;
     }
  }

@@ -84,7 +84,7 @@ public class Terminal {
                         int amount = scanner.nextInt();
 
                         if(!(amount > 30000 || amount < 0)){
-                            System.out.println("Amount: " + main.amountToString(amount) + " EUR");
+                            System.out.println("Amount: " + main.utils.amountToString(amount) + " EUR");
                             POSterminal.performTransaction(simulator, amount);
                         } else {
                             System.out.println("Invalid amount");
@@ -100,7 +100,7 @@ public class Terminal {
                     if(!main.cardBlocked(simulator)){
                         int balance = backend.getBalance(simulator);
                         int maximumReloadAmount = 30000 - balance;
-                        System.out.println("Enter amount to reload in eurocents (max: " + main.amountToString(maximumReloadAmount) + "): ");
+                        System.out.println("Enter amount to reload in eurocents (max: " + main.utils.amountToString(maximumReloadAmount) + "): ");
                         int reloadAmount = scanner.nextInt();
 
                         if(!(reloadAmount > maximumReloadAmount || reloadAmount < 0)){
@@ -116,7 +116,7 @@ public class Terminal {
                     }
                     break;
                 case 3: 
-                    System.out.println("Balance on the card: " + main.amountToString(backend.getBalance(simulator)) + " EUR");
+                    System.out.println("Balance on the card: " + main.utils.amountToString(backend.getBalance(simulator)) + " EUR");
                     break;
                 default:
                     System.out.println("Invalid option");
@@ -137,18 +137,6 @@ public class Terminal {
         System.out.println("Enter PIN");
         int pin = scanner.nextInt();
         System.out.println("Bank response: OK");
-    }
-
-    private String amountToString(int amount){
-        String amountString = Integer.toString(amount);
-        if(amountString.length() == 1){
-            amountString = "0,0" + amountString;
-        } else if(amountString.length() == 2){
-            amountString = "0," + amountString;
-        } else {
-            amountString = amountString.substring(0, amountString.length() - 2) + "," + amountString.substring(amountString.length() - 2);
-        }
-        return amountString;
     }
 
     private boolean cardBlocked(JavaxSmartCardInterface simulator){
