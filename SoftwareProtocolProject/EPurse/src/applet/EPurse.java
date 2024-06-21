@@ -90,6 +90,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
         if (selectingApplet()) {
             return;
         }
+        
+        if (initialized == false && ins > 3) {
+            ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
+        }
 
         // Check if the card is blocked
         if (blocked) {

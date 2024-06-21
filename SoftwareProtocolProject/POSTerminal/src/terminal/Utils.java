@@ -152,7 +152,7 @@ public class Utils {
             fileWriter.write("Transaction Date: " + LocalDateTime.now().toString() + "\n");
             fileWriter.write("Card ID: " + bytesToInt(cardID) + "\n");
             fileWriter.write("Terminal ID: " + terminalID + "\n");
-            fileWriter.write("Amount: " + amountToString(amount) + "eurocents" +"\n");
+            fileWriter.write("Amount: " + amountToString(amount) + " EUR" +"\n");
             fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(transactionSignature) + "\n");
             fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(responseSignature) + "\n");
             fileWriter.close();
