@@ -21,6 +21,7 @@ public class Payment {
         this.purse = purse;
     }
 
+    // Reload protocol for ReloadTerminal
     public void addMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){
@@ -71,6 +72,7 @@ public class Payment {
 
     }
 
+    // Payment protocol for POSTerminal
     public void substractMoney(APDU apdu){
         // Check if state is authenticated
         if(purse.state[0] != 0x03){

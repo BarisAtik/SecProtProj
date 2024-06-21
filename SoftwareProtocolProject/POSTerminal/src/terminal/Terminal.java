@@ -80,14 +80,14 @@ public class Terminal {
                 case 1:
                     POSterminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
-                        System.out.println("Enter amount in eurocents: ");
+                        System.out.println("Enter amount in eurocents (123 is 1,23): ");
                         int amount = scanner.nextInt();
 
                         if(!(amount > 30000 || amount < 0)){
                             System.out.println("Amount: " + main.utils.amountToString(amount) + " EUR");
                             POSterminal.performTransaction(simulator, amount);
                         } else {
-                            System.out.println("Invalid amount");
+                            System.out.println("Invalid amount or amount exceeds maximum amount (300 EUR)");
                         }
 
                     } else {
@@ -107,7 +107,7 @@ public class Terminal {
                             main.talkToBank(scanner);   
                             reloadTerminal.performReload(simulator, reloadAmount);
                         } else {
-                            System.out.println("Invalid amount");
+                            System.out.println("Invalid amount or amount exceeds maximum reload amount (300 EUR)");
                         }
 
                     } else {
