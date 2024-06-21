@@ -145,10 +145,14 @@ public class Utils {
         return verifier.verify(signature);
     }
 
-    public void writeTransactionToLog(byte[] transactionSignature, byte[] responseSignature){
+    public void writeTransactionToLog(byte[] transactionSignature, byte[] responseSignature, byte[] cardID, int terminalID, int amount){
         String fileName = "logs/transaction_" + LocalDateTime.now().toString() + ".txt";
         try {
             FileWriter fileWriter = new FileWriter(fileName);
+            fileWriter.write("Transaction Date: " + LocalDateTime.now().toString() + "\n");
+            fileWriter.write("Card ID: " + bytesToInt(cardID) + "\n");
+            fileWriter.write("Terminal ID: " + terminalID + "\n");
+            fileWriter.write("Amount: " + amount + "\n");
             fileWriter.write("Transaction Signature: " + Base64.getEncoder().encodeToString(transactionSignature) + "\n");
             fileWriter.write("Response Signature: " + Base64.getEncoder().encodeToString(responseSignature) + "\n");
             fileWriter.close();

@@ -44,10 +44,10 @@ public class InitTerminal {
     private final Utils utils;
 
     InitTerminal() {
-        cardModulus = new byte[128];
-        cardPubExp = new byte[3];
-        cardID = new byte[4];
-        cardExpireDate = new byte[4];
+        cardModulus = new byte[Constants.KEY_SIZE];
+        cardPubExp = new byte[Constants.EXPONENT_SIZE];
+        cardID = new byte[Constants.ID_size];
+        cardExpireDate = new byte[Constants.EXPIREDATE_size];
         
         utils = new Utils();
     }
@@ -78,10 +78,11 @@ public class InitTerminal {
     }
 
     public void sendCardIDAndExpireDate(JavaxSmartCardInterface simulator){        
-        byte[] data = new byte[8];
+        byte[] data = new byte[(Constants.ID_size + Constants.EXPIREDATE_size)];
 
         // Generate a random unsigned 2-byte number
-        int cardIDint = 65533; // 65536 is 2^16
+        Random rand = new Random();
+        int cardIDint = rand.nextInt();
         cardID = utils.intToBytes(cardIDint);
   
         // Get the current Unix timestamp
@@ -96,8 +97,8 @@ public class InitTerminal {
         //cardExpireDate = utils.intToBytes(157680000);        
 
         // Set the card ID and expire date
-        System.arraycopy(cardID, 0, data, 0, 4);
-        System.arraycopy(cardExpireDate, 0, data, 4, 4);
+        System.arraycopy(cardID, 0, data, 0, Constants.ID_size);
+        System.arraycopy(cardExpireDate, 0, data, Constants.ID_size, Constants.EXPIREDATE_size);
         
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x01, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
@@ -138,37 +139,38 @@ public class InitTerminal {
         // Check the response data
         byte[] responseData = response.getData();
         // Check the length of the response data
-        if (responseData.length != 131) {
+        if (responseData.length != (Constants.EXPONENT_SIZE + Constants.KEY_SIZE)) {
             System.out.println("Error: Response data length is not 131 bytes");
             return;
         }
         // Read the card public exponent (3 bytes) and modulus (128 bytes)
-        System.arraycopy(responseData, 0, cardPubExp, 0, 3);
-        System.arraycopy(responseData, 3, cardModulus, 0, 128);
+        System.arraycopy(responseData, 0, cardPubExp, 0, Constants.EXPONENT_SIZE);
+        System.arraycopy(responseData, Constants.EXPONENT_SIZE, cardModulus, 0, Constants.KEY_SIZE);
     }
 
     public void createCertificate(JavaxSmartCardInterface simulator, RSAPrivateKey masterPrivateKey){
 
         // create certificate
         // cardID (4 bytes)|| expireDate (4 bytes) || cardExp (3 bytes) || cardModulus (128 bytes)
-        byte[] data = new byte[139];
-        System.arraycopy(cardID, 0, data, 0, 4);
-        System.arraycopy(cardExpireDate, 0, data, 4, 4);
-        System.arraycopy(cardPubExp, 0, data, 8, 3);
-        System.arraycopy(cardModulus, 0, data, 11, 128);
+        byte[] data = new byte[Constants.CERTIFICATE_SIZE];
+        System.arraycopy(cardID, 0, data, 0, Constants.ID_size);
+        System.arraycopy(cardExpireDate, 0, data, Constants.ID_size, Constants.EXPIREDATE_size);
+        System.arraycopy(cardPubExp, 0, data, (Constants.ID_size + Constants.EXPIREDATE_size), Constants.EXPONENT_SIZE);
+        System.arraycopy(cardModulus, 0, data, (Constants.ID_size + Constants.EXPIREDATE_size + Constants.EXPONENT_SIZE), Constants.KEY_SIZE);
 
         //System.out.println("(InitTerminal) cardID: " + utils.toHexString(cardID));
         //System.out.println("(InitTerminal) cardExpireDate: " + utils.toHexString(cardExpireDate));
         //System.out.println("(InitTerminal) cardModulus: " + utils.toHexString(cardModulus));
         //System.out.println("(InitTerminal) Data which has been send: " + utils.toHexString(data));
     
-        byte[] certificate = new byte[139];
+        byte[] certificate = new byte[Constants.SIGNATURE_SIZE];
 
         // Sign the data with master private key
         try {
             certificate = utils.sign(data, masterPrivateKey);
+            // DEBUG: Print size of the certificate
             // System.out.println("(InitTerminal) Certificate which has been send: " + utils.toHexString(certificate));
-            //System.out.println("(InitTerminal) Certificate length: " + certificate.length);
+            // System.out.println("(InitTerminal) Certificate length: " + certificate.length);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   
@@ -200,12 +202,12 @@ public class InitTerminal {
         System.arraycopy(terminalModulus, 1, modulusWithoutFirstByte, 0, terminalModulus.length - 1);
         terminalModulus = modulusWithoutFirstByte;
 
-        byte[] data = new byte[135];
-        System.arraycopy(terminalIDBytes, 0, data, 0, 4);
-        System.arraycopy(terminalExponent, 0, data, 4, 3);
-        System.arraycopy(terminalModulus, 0, data, 7, 128);
+        byte[] data = new byte[(Constants.ID_size + Constants.EXPONENT_SIZE + Constants.KEY_SIZE)];
+        System.arraycopy(terminalIDBytes, 0, data, 0, Constants.ID_size);
+        System.arraycopy(terminalExponent, 0, data, Constants.ID_size, Constants.EXPONENT_SIZE);
+        System.arraycopy(terminalModulus, 0, data, (Constants.ID_size + Constants.EXPONENT_SIZE), Constants.KEY_SIZE);
 
-        byte[] certificate = new byte[135];
+        byte[] certificate = new byte[(Constants.ID_size + Constants.EXPONENT_SIZE + Constants.SIGNATURE_SIZE)];
         try {
             certificate = utils.sign(data, masterPrivateKey);
         } catch (Exception e) {

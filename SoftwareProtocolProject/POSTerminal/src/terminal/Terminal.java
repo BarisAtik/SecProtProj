@@ -57,8 +57,6 @@ public class Terminal {
         backend.sendMasterPublicKey(simulator, backend.masterPublicKey);
         backend.createCertificate(simulator, backend.masterPrivateKey);
         
-        int terminalID = 123;
-
         POSTerminal POSterminal = new POSTerminal(123, backend.masterPublicKey);
         POSterminal.setTerminalKeyPair();
         byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
@@ -84,8 +82,14 @@ public class Terminal {
                     if(!main.cardBlocked(simulator)){
                         System.out.println("Enter amount in eurocents: ");
                         int amount = scanner.nextInt();
-                        System.out.println("Amount: " + main.amountToString(amount) + " EUR");
-                        POSterminal.performTransaction(simulator, amount);
+
+                        if(!(amount > 30000 || amount < 0)){
+                            System.out.println("Amount: " + main.amountToString(amount) + " EUR");
+                            POSterminal.performTransaction(simulator, amount);
+                        } else {
+                            System.out.println("Invalid amount");
+                        }
+
                     } else {
                         System.err.println("Card is blocked");
                         demo = false;
@@ -98,12 +102,14 @@ public class Terminal {
                         int maximumReloadAmount = 30000 - balance;
                         System.out.println("Enter amount to reload in eurocents (max: " + main.amountToString(maximumReloadAmount) + "): ");
                         int reloadAmount = scanner.nextInt();
+
                         if(!(reloadAmount > maximumReloadAmount || reloadAmount < 0)){
                             main.talkToBank(scanner);   
                             reloadTerminal.performReload(simulator, reloadAmount);
                         } else {
                             System.out.println("Invalid amount");
                         }
+
                     } else {
                         System.err.println("Card is blocked");
                         demo = false;
@@ -120,7 +126,7 @@ public class Terminal {
         }
     }
 
-    public void talkToBank(Scanner scanner){
+    private void talkToBank(Scanner scanner){
         String[] bank = {"ING", "ABN", "Rabobank"};
         System.out.println("Choose a bank: ");
         for(int i = 0; i < bank.length; i++){
@@ -145,7 +151,7 @@ public class Terminal {
         return amountString;
     }
 
-    public boolean cardBlocked(JavaxSmartCardInterface simulator){
+    private boolean cardBlocked(JavaxSmartCardInterface simulator){
         // Try silly command to see if card is blocked
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 17, (byte) 0x00, (byte) 0x00);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);

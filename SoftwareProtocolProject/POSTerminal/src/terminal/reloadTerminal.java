@@ -75,16 +75,16 @@ public class reloadTerminal{
 
     public reloadTerminal(int terminalID, RSAPublicKey masterPubKey) {
         terminalCounter = new byte[]{0x00, 0x00}; 
-        terminalCert = new byte[128];
+        terminalCert = new byte[Constants.SIGNATURE_SIZE];
         this.terminalID = terminalID;
         this.masterPubKey = masterPubKey;
 
-        cardID = new byte[4];
-        cardNonce = new byte[4];
-        cardExpireDate = new byte[4];
-        cardExp = new byte[3];
-        cardMod = new byte[128];
-        cardCertificate = new byte[128];
+        cardID = new byte[Constants.ID_size];
+        cardNonce = new byte[Constants.NONCE_SIZE];
+        cardExpireDate = new byte[Constants.EXPIREDATE_size];
+        cardExp = new byte[Constants.EXPONENT_SIZE];
+        cardMod = new byte[Constants.KEY_SIZE];
+        cardCertificate = new byte[Constants.SIGNATURE_SIZE];
 
         utils = new Utils();
         secureRandom = new SecureRandom();
@@ -129,10 +129,10 @@ public class reloadTerminal{
         byte[] terminalExponent = terminalPubKey.getPublicExponent().toByteArray();
         byte[] terminalModulus = getPublicModulus();
 
-        System.arraycopy(terminalIDBytes, 0, data, 0, 4);
-        System.arraycopy(terminalNonce, 0, data, 4, 4);
-        System.arraycopy(terminalExponent, 0, data, 8, 3);
-        System.arraycopy(terminalModulus, 0, data, 11, 128);
+        System.arraycopy(terminalIDBytes, 0, data, 0, Constants.ID_size);
+        System.arraycopy(terminalNonce, 0, data, Constants.ID_size, Constants.NONCE_SIZE);
+        System.arraycopy(terminalExponent, 0, data, (Constants.ID_size + Constants.NONCE_SIZE), Constants.EXPONENT_SIZE);
+        System.arraycopy(terminalModulus, 0, data, (Constants.ID_size + Constants.NONCE_SIZE + Constants.EXPONENT_SIZE), Constants.KEY_SIZE);
 
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x04, (byte) 0x00, (byte) 0x00, data);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
@@ -141,15 +141,15 @@ public class reloadTerminal{
 
         // Receive cardID (4 bytes)|| cardNonce (4 bytes) || cardExpireDate (4 bytes) || cardExp (3 bytes)|| cardMod (128 bytes)
         byte[] responseData = response.getData();
-        System.arraycopy(responseData, 0, cardID, 0, 4);
-        System.arraycopy(responseData, 4, cardNonce, 0, 4);
-        System.arraycopy(responseData, 8, cardExpireDate, 0, 4);
-        System.arraycopy(responseData, 12, cardExp, 0, 3);
-        System.arraycopy(responseData, 15, cardMod, 0, 128);
+        System.arraycopy(responseData, 0, cardID, 0, Constants.ID_size);
+        System.arraycopy(responseData, Constants.ID_size, cardNonce, 0, Constants.NONCE_SIZE);
+        System.arraycopy(responseData, (Constants.ID_size + Constants.NONCE_SIZE), cardExpireDate, 0, Constants.EXPIREDATE_size);
+        System.arraycopy(responseData, (Constants.ID_size + Constants.NONCE_SIZE + Constants.EXPIREDATE_size), cardExp, 0, Constants.EXPONENT_SIZE);
+        System.arraycopy(responseData, (Constants.ID_size + Constants.NONCE_SIZE + Constants.EXPIREDATE_size + Constants.EXPONENT_SIZE), cardMod, 0, Constants.KEY_SIZE);
 
         // Make the public key of the card from the cardMod and the cardExp using setExponent and setModulus
        try {
-            cardPubKey = utils.getPublicKey(cardExp, cardMod);
+            cardPubKey = utils.getPublicKey(terminalExponent, cardMod);
        } catch (Exception e) {
             e.printStackTrace();
        }
@@ -159,18 +159,18 @@ public class reloadTerminal{
         ResponseAPDU response2 = simulator.transmitCommand(commandAPDU2);
 
         byte[] response2Data = response2.getData();
-        System.arraycopy(response2Data, 0, cardCertificate, 0, 128);
+        System.arraycopy(response2Data, 0, cardCertificate, 0, Constants.SIGNATURE_SIZE);
 
         // Verify contents with the certificate
-        byte[] dataToVerify = new byte[139];
-        System.arraycopy(cardID, 0, dataToVerify, 0, 4);
-        System.arraycopy(cardExpireDate, 0, dataToVerify, 4, 4);
-        System.arraycopy(cardExp, 0, dataToVerify, 8, 3);
-        System.arraycopy(cardMod, 0, dataToVerify, 11, 128);
+        byte[] dataToVerify = new byte[Constants.CERTIFICATE_SIZE];
+        System.arraycopy(cardID, 0, dataToVerify, 0, Constants.ID_size);
+        System.arraycopy(cardExpireDate, 0, dataToVerify, Constants.ID_size, Constants.EXPIREDATE_size);
+        System.arraycopy(cardExp, 0, dataToVerify, (Constants.ID_size + Constants.EXPIREDATE_size), Constants.EXPONENT_SIZE);
+        System.arraycopy(cardMod, 0, dataToVerify, (Constants.ID_size + Constants.EXPIREDATE_size + Constants.EXPONENT_SIZE), Constants.KEY_SIZE);
 
         try {
             boolean verified = utils.verify(dataToVerify, cardCertificate, masterPubKey);
-            System.out.println("(reloadTerminal) Certificate verified: " + verified);
+            System.out.println("(POSTerminal) Certificate verified: " + verified);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   
@@ -179,10 +179,10 @@ public class reloadTerminal{
         //-----------------------------SIGN CARD NONCE---------------------------------------------------
         
         // sign and send signed nonce to card
-        byte[] cardNonceSignature = new byte[128];
+        byte[] cardNonceSignature = new byte[Constants.SIGNATURE_SIZE];
         try {
             cardNonceSignature = utils.sign(cardNonce, terminalPrivKey);
-            // System.out.println("(reloadTerminal) cardNonceSignature size: " + cardNonceSignature.length); 
+            // System.out.println("(POSTerminal) cardNonceSignature size: " + cardNonceSignature.length); 
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();
@@ -199,7 +199,7 @@ public class reloadTerminal{
         // Verify the signature        
         try {
             boolean verified = utils.verify(terminalNonce, cardSignedNonce, cardPubKey);
-            System.out.println("(reloadTerminal) Terminal Nonce Signature verified: " + verified);
+            System.out.println("(POSTerminal) Terminal Nonce Signature verified: " + verified);
         } catch (Exception e) {
             // Handle the exception here
             e.printStackTrace();   
@@ -208,19 +208,19 @@ public class reloadTerminal{
         //------------------------------CHECK EXPIRY DATE--------------------------------------------------
         // Check if the card is expired 
         byte[] currentDate = utils.getCurrentDate();
-        byte[] expireDate = new byte[4];
-        System.arraycopy(cardExpireDate, 0, expireDate, 0, 4);
+        byte[] expireDate = new byte[Constants.EXPIREDATE_size];
+        System.arraycopy(cardExpireDate, 0, expireDate, 0, Constants.EXPIREDATE_size);
 
         if(utils.isPastDate(expireDate, currentDate)){
-            System.out.println("(reloadTerminal) Card is expired!");
+            System.out.println("(POSTerminal) Card is expired!");
         } else {
-            System.out.println("(reloadTerminal) Card is not expired!");
+            System.out.println("(POSTerminal) Card is not expired!");
         }
 
         // If card is expired, send command to block the card
         if(utils.isPastDate(expireDate, currentDate)){
             // sign cardId 
-            byte[] signature = new byte[128];
+            byte[] signature = new byte[Constants.SIGNATURE_SIZE];
             try {
                 signature = utils.sign(cardID, terminalPrivKey);
             } catch (Exception e) {
@@ -232,18 +232,17 @@ public class reloadTerminal{
             CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00, signature);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
-
     }
 
     public void performReload(JavaxSmartCardInterface simulator, int amount){
         //-----------------------------SEND TRANSACTION DATA---------------------------------------------------
         // Create signature amount || terminalCounter
         byte[] amountBytes = utils.intToShortBytes(amount);
-        byte[] data = new byte[4];
-        System.arraycopy(amountBytes, 0, data, 0, 2);
-        System.arraycopy(terminalCounter, 0, data, 2, 2);
+        byte[] data = new byte[(Constants.BALANCE_SIZE + Constants.COUNTER_SIZE)];
+        System.arraycopy(amountBytes, 0, data, 0, Constants.BALANCE_SIZE);
+        System.arraycopy(terminalCounter, 0, data, Constants.BALANCE_SIZE, Constants.COUNTER_SIZE);
 
-        byte[] transactionSignature = new byte[128];
+        byte[] transactionSignature = new byte[Constants.SIGNATURE_SIZE];
         try {
             transactionSignature = utils.sign(data, terminalPrivKey);
         } catch (Exception e) {
@@ -252,10 +251,10 @@ public class reloadTerminal{
         }
 
         // Send amount (2 bytes) || terminalCounter (2 bytes) || transactionSignature (128 bytes)
-        byte[] dataToSend = new byte[132];
-        System.arraycopy(amountBytes, 0, dataToSend, 0, 2);
-        System.arraycopy(terminalCounter, 0, dataToSend, 2, 2);
-        System.arraycopy(transactionSignature, 0, dataToSend, 4, 128);
+        byte[] dataToSend = new byte[(Constants.BALANCE_SIZE + Constants.COUNTER_SIZE + Constants.SIGNATURE_SIZE)];
+        System.arraycopy(amountBytes, 0, dataToSend, 0, Constants.BALANCE_SIZE);
+        System.arraycopy(terminalCounter, 0, dataToSend, Constants.BALANCE_SIZE, Constants.COUNTER_SIZE);
+        System.arraycopy(transactionSignature, 0, dataToSend, (Constants.BALANCE_SIZE + Constants.COUNTER_SIZE), Constants.SIGNATURE_SIZE);
 
         CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 0x08, (byte) 0x00, (byte) 0x00, dataToSend);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
@@ -267,16 +266,16 @@ public class reloadTerminal{
         // Get response from card:  M (1 byte) || signature (128 bytes)
         byte[] responseData = response.getData();
         byte M = responseData[0];
-        byte[] signatureResponse = new byte[128];
-        System.arraycopy(responseData, 1, signatureResponse, 0, 128);
+        byte[] signatureResponse = new byte[Constants.SIGNATURE_SIZE];
+        System.arraycopy(responseData, 1, signatureResponse, 0, Constants.SIGNATURE_SIZE);
 
         // Verify the signature using own terminalCounter incrementented by 1
-        byte[] dataToVerify = new byte[3];
+        byte[] dataToVerify = new byte[(1 + Constants.COUNTER_SIZE)];
         System.arraycopy(responseData, 0, dataToVerify, 0, 1);
-        System.arraycopy(terminalCounter, 0, dataToVerify, 1, 2);
+        System.arraycopy(terminalCounter, 0, dataToVerify, 1, Constants.COUNTER_SIZE);
        
         // Debug print terminalCounterResponse
-        System.out.println("(reloadTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
+        //System.out.println("(reloadTerminal) Terminal Counter Response: " + utils.shortBytesToInt(terminalCounter));
 
         try {
             boolean verified = utils.verify(dataToVerify, signatureResponse, cardPubKey);
@@ -288,7 +287,7 @@ public class reloadTerminal{
                 System.out.println("(reloadTerminal) RELOAD SUCCESSFUL: TRANSACTION COMPLETED");
 
                 // Write transactionSignature || signatureResponse to file under logs folder with timestamp
-                utils.writeTransactionToLog(transactionSignature, signatureResponse);
+                utils.writeTransactionToLog(transactionSignature, signatureResponse, cardID, terminalID, amount);
             }
             
         } catch (Exception e) {

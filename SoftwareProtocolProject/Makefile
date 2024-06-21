@@ -33,16 +33,16 @@ initTerminal: POSTerminal/bin/terminal/InitTerminal.class
 reloadTerminal: POSTerminal/bin/terminal/reloadTerminal.class
 
 POSTerminal/bin/terminal/POSTerminal.class: POSTerminal/src/terminal/POSTerminal.java
-	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java 
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/Constants.java
 
 POSTerminal/bin/terminal/InitTerminal.class: POSTerminal/src/terminal/InitTerminal.java
-	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/Constants.java
 
 POSTerminal/bin/terminal/Terminal.class: POSTerminal/src/terminal/Terminal.java
-	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/Terminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/reloadTerminal.java
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/Terminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/reloadTerminal.java POSTerminal/src/terminal/Constants.java
 
 POSTerminal/bin/terminal/reloadTerminal.class: POSTerminal/src/terminal/reloadTerminal.java
-	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/reloadTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java
+	javac -d POSTerminal/bin -cp ${JC_HOME}:util/jcardsim/${JCARDSIM}.jar:EPurse/bin:POSTerminal/bin POSTerminal/src/terminal/reloadTerminal.java POSTerminal/src/terminal/Utils.java POSTerminal/src/terminal/POSTerminal.java POSTerminal/src/terminal/InitTerminal.java POSTerminal/src/terminal/Constants.java
 
 runterminal: 
 	# Runs the GUI terminal
