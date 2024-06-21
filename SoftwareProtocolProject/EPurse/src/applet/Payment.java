@@ -51,8 +51,13 @@ public class Payment {
         Util.arrayCopy(purse.transientData, (short) Constants.BALANCE_SIZE, purse.terminalCounter, (short) 0, (short) Constants.COUNTER_SIZE);
 
         // Update balance
-        increaseBalance();
-        purse.transientData[0] = 1;
+        if (!reloadPossible()) {
+            // Overwrite first byte of transientData with M = 0 indicating reload not possible
+            purse.transientData[0] = 0;
+        } else {
+            increaseBalance();
+            purse.transientData[0] = 1;
+        }
 
         // Increment terminalCounter (2 bytes)
         purse.terminalCounter = incrementCounter(purse.terminalCounter);
@@ -149,8 +154,14 @@ public class Payment {
         return counter;
     }
 
+    // Boolean function to check if sufficient funds are available
     public boolean sufficientFunds() {
         return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0) && Util.getShort(purse.amount, (short) 0) >= 0 ;
         //Describe in the paper, why negative numbers caused a problem...!!!
-    }   
+    }
+
+    // Boolean function to check if reload is possible i.e amount + balance <= 300 EUR and amount >= 0
+    public boolean reloadPossible() {
+        return Util.getShort(purse.balance, (short) 0) + Util.getShort(purse.amount, (short) 0) <= 30000 && Util.getShort(purse.amount, (short) 0) >= 0;
+    }
 }
