@@ -62,7 +62,7 @@ public class Terminal {
         byte[] terminalCert = backend.createTerminalCertificate(POSterminal.terminalID, POSterminal.terminalPubKey, backend.masterPrivateKey);
         POSterminal.setTerminalCertificate(terminalCert);
 
-        reloadTerminal reloadTerminal = new reloadTerminal(023, backend.masterPublicKey);
+        reloadTerminal reloadTerminal = new reloadTerminal(223, backend.masterPublicKey);
         reloadTerminal.setTerminalKeyPair();
         byte[] reloadTerminalCert = backend.createTerminalCertificate(reloadTerminal.terminalID, reloadTerminal.terminalPubKey, backend.masterPrivateKey);
         reloadTerminal.setTerminalCertificate(reloadTerminalCert);
@@ -72,12 +72,12 @@ public class Terminal {
         while(demo){
             Scanner scanner = new Scanner(System.in);
             System.out.println("Choose an option: ");
-            System.out.println("0) Pay at a POSterminal");
-            System.out.println("1) Reload card at a reload terminal");
-            System.out.println("2) Check balance");
+            System.out.println("1) Pay at a POSterminal");
+            System.out.println("2) Reload card at a reload terminal");
+            System.out.println("3) Check balance");
             int option = scanner.nextInt();
             switch(option){
-                case 0:
+                case 1:
                     POSterminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
                         System.out.println("Enter amount in eurocents: ");
@@ -95,7 +95,7 @@ public class Terminal {
                         demo = false;
                     }
                     break; 
-                case 1:
+                case 2:
                     reloadTerminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
                         int balance = backend.getBalance(simulator);
@@ -115,7 +115,7 @@ public class Terminal {
                         demo = false;
                     }
                     break;
-                case 2: 
+                case 3: 
                     System.out.println("Balance on the card: " + main.amountToString(backend.getBalance(simulator)) + " EUR");
                     break;
                 default:

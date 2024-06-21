@@ -82,7 +82,7 @@ public class InitTerminal {
 
         // Generate a random unsigned 2-byte number
         Random rand = new Random();
-        int cardIDint = rand.nextInt();
+        int cardIDint = rand.nextInt(65536);
         cardID = utils.intToBytes(cardIDint);
   
         // Get the current Unix timestamp
