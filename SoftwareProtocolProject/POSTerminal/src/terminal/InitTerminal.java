@@ -80,9 +80,9 @@ public class InitTerminal {
     public void sendCardIDAndExpireDate(JavaxSmartCardInterface simulator){        
         byte[] data = new byte[(Constants.ID_size + Constants.EXPIREDATE_size)];
 
-        // Generate a random unsigned 2-byte number
+        // Generate a random signed 2-byte number
         Random rand = new Random();
-        int cardIDint = rand.nextInt(65536);
+        int cardIDint = rand.nextInt(Short.MAX_VALUE);
         cardID = utils.intToBytes(cardIDint);
   
         // Get the current Unix timestamp
