@@ -236,6 +236,11 @@ public class reloadTerminal{
 
     public void performReload(JavaxSmartCardInterface simulator, int amount){
         //-----------------------------SEND TRANSACTION DATA---------------------------------------------------
+        // Check if terminalCounter is not SIGNED_SHORT_MAX_VALUE (prevent overflow on card side)
+        if(terminalCounter[0] == 0x7F && terminalCounter[1] == 0xFF){
+            terminalCounter = new byte[]{0x00, 0x00};
+        }
+
         // Create signature amount || terminalCounter
         byte[] amountBytes = utils.intToShortBytes(amount);
         byte[] data = new byte[(Constants.BALANCE_SIZE + Constants.COUNTER_SIZE)];
