@@ -80,7 +80,7 @@ public class Terminal {
                 case 1:
                     POSterminal.authenticateCard(simulator);
                     if(!main.cardBlocked(simulator)){
-                        System.out.println("Enter amount in eurocents (123 is 1,23): ");
+                        System.out.println("Enter amount in eurocents (123 -> 1,23 EUR): ");
                         int amount = scanner.nextInt();
 
                         if(!(amount > 30000 || amount < 0)){
@@ -126,6 +126,11 @@ public class Terminal {
         }
     }
 
+    /**
+     * A simulation of a terminal talking to a bank for demonstration purposes.
+     * 
+     * @param scanner
+     */
     private void talkToBank(Scanner scanner){
         String[] bank = {"ING", "ABN", "Rabobank"};
         System.out.println("Choose a bank: ");
@@ -139,9 +144,16 @@ public class Terminal {
         System.out.println("Bank response: OK");
     }
 
+    /**
+     * This function is only for demonstration purposes because we use a simulator. The card sends only a boolean to the terminal to indicate if the card is blocked. 
+     * With the simulator, if a card is blocked, it will throw a ISOException with the status word SW_CONDITIONS_NOT_SATISFIED but we can't catch this exception in the simulator.
+     * 
+     * @param simulator
+     * @return true if card is blocked, false if not
+     */
     private boolean cardBlocked(JavaxSmartCardInterface simulator){
         // Try silly command to see if card is blocked
-        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 17, (byte) 0x00, (byte) 0x00);
+        CommandAPDU commandAPDU = new CommandAPDU((byte) 0x00, (byte) 11, (byte) 0x00, (byte) 0x00);
         ResponseAPDU response = simulator.transmitCommand(commandAPDU);
         // Check if boolean is true
         if(response.getData()[0] == 1){

@@ -157,7 +157,6 @@ public class Payment {
     // Boolean function to check if sufficient funds are available
     public boolean sufficientFunds() {
         return Util.getShort(purse.balance, (short) 0) >= Util.getShort(purse.amount, (short) 0) && Util.getShort(purse.amount, (short) 0) >= 0 ;
-        //Describe in the paper, why negative numbers caused a problem...!!!
     }
 
     // Boolean function to check if reload is possible i.e amount + balance <= 300 EUR and amount >= 0

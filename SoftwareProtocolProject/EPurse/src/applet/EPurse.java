@@ -129,10 +129,10 @@ public class EPurse extends javacard.framework.Applet implements ISO7816 {
             case 9:
                 payment.sendBalance(apdu);
                 break;
-            case 16:
+            case 10:
                 block.block(apdu);
                 break;
-            case 17:
+            case 11:
                 block.sendBlockedStatus(apdu);
                 break;
             default:

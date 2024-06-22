@@ -31,7 +31,7 @@ public class Init {
         byte[] buffer = apdu.getBuffer();
         apdu.setIncomingAndReceive();
 
-        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) 131);
+        Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.transientData, (short) 0, (short) (Constants.EXPONENT_SIZE + Constants.KEY_SIZE));
 
         // set exponent and modulus
         purse.masterPubKey = (RSAPublicKey) KeyBuilder.buildKey(KeyBuilder.TYPE_RSA_PUBLIC, KeyBuilder.LENGTH_RSA_1024, false);
@@ -58,7 +58,7 @@ public class Init {
 
         Util.arrayCopy(buffer, ISO7816.OFFSET_CDATA, purse.cardCertificate, (short) 0, (short) Constants.SIGNATURE_SIZE);
 
-        // copy purse.cardId + purse.expireDateUnix + purse.cardCertificate to transientData
+        // copy purse.cardId (4 bytes) || purse.expireDateUnix (4 bytes) || purse.cardCertificate (128 + 3 = 131 bytes) to transientData
         Util.arrayCopy(purse.cardId, (short) 0, purse.transientData, (short) 0, (short) Constants.ID_size);
         Util.arrayCopy(purse.expireDateUnix, (short) 0, purse.transientData, (short) Constants.ID_size, (short) Constants.EXPIREDATE_size);
         
@@ -76,13 +76,5 @@ public class Init {
             ISOException.throwIt(ISO7816.SW_CONDITIONS_NOT_SATISFIED);
         }
         
-    }
-
-    public String toHexString(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b: bytes) {
-          sb.append(String.format("%02X ", b));
-        }
-        return sb.toString();
     }
 }

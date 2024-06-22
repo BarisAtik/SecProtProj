@@ -229,7 +229,7 @@ public class reloadTerminal{
             }
             // Send signature to card
             System.out.println("(POSTerminal) Sending blocking command to card");
-            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 16, (byte) 0x00, (byte) 0x00, signature);
+            CommandAPDU commandAPDU4 = new CommandAPDU((byte) 0x00, (byte) 10, (byte) 0x00, (byte) 0x00, signature);
             ResponseAPDU response4 = simulator.transmitCommand(commandAPDU4);
         }
     }
