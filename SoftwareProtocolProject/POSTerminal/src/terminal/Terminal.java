@@ -137,7 +137,12 @@ public class Terminal {
         for(int i = 0; i < bank.length; i++){
             System.out.println((i+1) + ") " + bank[i]);
         }
-        int bankChoice = scanner.nextInt();
+        // Choose a number between 1 and 3 else it will ask again
+        int bankChoice = 0;
+        while(bankChoice < 1 || bankChoice > 3){
+            System.out.println("Choose bank (1-3): ");
+            bankChoice = scanner.nextInt();
+        }
         System.out.println("Talkin to " + bank[bankChoice - 1]);   
         System.out.println("Enter PIN");
         int pin = scanner.nextInt();

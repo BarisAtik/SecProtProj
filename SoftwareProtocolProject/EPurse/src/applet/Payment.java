@@ -50,12 +50,11 @@ public class Payment {
         Util.arrayCopy(purse.transientData, (short) 0, purse.amount, (short) 0, (short) Constants.BALANCE_SIZE);
         Util.arrayCopy(purse.transientData, (short) Constants.BALANCE_SIZE, purse.terminalCounter, (short) 0, (short) Constants.COUNTER_SIZE);
 
-        // Update balance
+        // Update message
         if (!reloadPossible()) {
             // Overwrite first byte of transientData with M = 0 indicating reload not possible
             purse.transientData[0] = 0;
         } else {
-            increaseBalance();
             purse.transientData[0] = 1;
         }
 
@@ -75,6 +74,10 @@ public class Payment {
         // Send response
         apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
 
+        // Update balance
+        if (purse.transientData[0] == 1) {
+            increaseBalance();
+        }
     }
 
     // Payment protocol for POSTerminal
@@ -110,8 +113,6 @@ public class Payment {
             // Overwrite first byte of transientData with M = 0 indicating insufficient funds
             purse.transientData[0] = 0;
         } else {
-            // Update balance
-            decreaseBalance();
             // Overwrite first byte of transientData with M = 1 indicating sufficient funds
             purse.transientData[0] = 1;
         }
@@ -131,6 +132,11 @@ public class Payment {
         
         // Send response
         apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
+
+        // Update balance
+        if (purse.transientData[0] == 1) {
+            decreaseBalance();
+        }
     }
 
     public void sendBalance(APDU apdu){
