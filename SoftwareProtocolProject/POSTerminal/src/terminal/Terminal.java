@@ -151,7 +151,7 @@ public class Terminal {
 
     /**
      * This function is only for demonstration purposes because we use a simulator. The card sends only a boolean to the terminal to indicate if the card is blocked. 
-     * With the simulator, if a card is blocked, it will throw a ISOException with the status word SW_CONDITIONS_NOT_SATISFIED but we can't catch this exception in the simulator.
+     * With the simulator, if a card is blocked, it will throw an ISOException with the status word SW_CONDITIONS_NOT_SATISFIED but we can't catch this exception in the simulator.
      * 
      * @param simulator
      * @return true if card is blocked, false if not
