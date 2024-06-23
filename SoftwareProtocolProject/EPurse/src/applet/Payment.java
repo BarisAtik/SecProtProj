@@ -115,6 +115,7 @@ public class Payment {
         } else {
             // Overwrite first byte of transientData with M = 1 indicating sufficient funds
             purse.transientData[0] = 1;
+            decreaseBalance();
         }
 
         // Increment terminalCounter (2 bytes)
@@ -132,11 +133,6 @@ public class Payment {
         
         // Send response
         apdu.setOutgoingAndSend((short) 0, (short) (1 + signatureLength));
-
-        // Update balance
-        if (purse.transientData[0] == 1) {
-            decreaseBalance();
-        }
     }
 
     public void sendBalance(APDU apdu){
